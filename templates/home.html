@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your Chat App</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Optional: Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom Styles */
+    
+    /* Background Image for Hero Section */
+    .hero {
+      background: url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center;
+      background-size: cover;
+      padding: 100px 0;
+      text-align: center;
+      position: relative;
+      color: #ffffff; /* Ensure text is readable over the image */
+    }
+    /* Overlay for Hero Section */
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); /* Adjust opacity as needed */
+      z-index: 1;
+    }
+    .hero .container {
+      position: relative;
+      z-index: 2;
+    }
+
+    .feature-icon {
+      font-size: 4rem;
+      color: #0d6efd;
+      margin-bottom: 20px;
+    }
+    .footer {
+      background: #343a40;
+      color: #ffffff;
+      padding: 20px 0;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .feature-icon {
+        font-size: 3rem;
+      }
+    }
+
+    /* Hover Effect Classes */
+    .hover-shadow {
+      border-radius: 8px; /* Rounded corners */
+      transition: box-shadow 0.3s, border 0.3s; /* Smooth transition */
+      border: 1px solid transparent; /* Initial border */
+    }
+
+    .hover-shadow:hover {
+      border: 1px solid #0d6efd; /* Blue border on hover */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow on hover */
+    }
+
+    /* Custom Hover Effects for Login and Signup Buttons */
+
+    /* Login Button Hover Effect */
+    .btn-outline-primary.hover-login:hover {
+      background-color: #0d6efd; /* Solid primary background */
+      color: #ffffff; /* White text */
+      border-color: #0d6efd; /* Solid border */
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    /* Signup Button Hover Effect */
+    .btn-primary.hover-signup:hover {
+      background-color:  #0d6efd; /* Darker shade of primary color */
+      color: #ffffff; /* White text */
+      
+      border-color: #004085; /* Darker border */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Adds shadow */
+      transform: translateY(-2px); /* Slight upward movement */
+      transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+
+    /* Additional Styling for Modals */
+    .modal-header {
+      border-bottom: none;
+    }
+    .modal-footer {
+      border-top: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'home' %}">ChatApp</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav align-items-center">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Features</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Pricing</a>
+            </li>
+            {% if user.is_authenticated %}
+              <!-- User Profile Dropdown -->
+              <li class="nav-item dropdown profile-dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fas fa-user-circle fa-lg"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                  <li><a class="dropdown-item" href="{% url 'user_profile' %}">Profilee</a></li>
+                  <li><a class="dropdown-item" href="#">Settings</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <form method="POST" action="#">
+                      {% csrf_token %}
+                      <button type="submit" class="dropdown-item">Logout</button>
+                    </form>
+                  </li>
+                </ul>
+              </li>
+            {% else %}
+              <!-- Login Button -->
+              <li class="nav-item">
+                <a class="nav-link btn btn-outline-primary hover-login me-2" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+              </li>
+              <!-- Signup Button -->
+              <li class="nav-item">
+                <a class="nav-link btn btn-primary hover-signup" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Signup</a>
+              </li>
+            {% endif %}
+          </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero d-flex align-items-center" style="margin-top: 80px;">
+    <div class="container">
+      <h1 class="display-4">Connect Instantly with Anyone</h1>
+      <p class="lead my-4">Join our chat application and start communicating seamlessly with your friends and colleagues.</p>
+
+      {% if not request.user.is_authenticated %}
+      <a href="#" class="btn btn-primary btn-lg hover-signup" data-bs-toggle="modal" data-bs-target="#signupModal">Sign Up Now</a>
+      {% else %}
+      <a href="#" class="btn btn-primary btn-lg hover-signup"  >Dashboard</a>
+
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-5">
+    <div class="container">
+      <div class="row text-center">
+        <!-- Feature 1: Group Rooms -->
+        <div class="col-md-4 mb-4">
+          <a href="{% url 'public_url' %}" class="text-decoration-none text-reset">
+            <div class="p-4 border rounded hover-shadow">
+              <i class="fas fa-users feature-icon"></i>
+              <h3>Group Rooms</h3>
+              <p>Create and join group rooms to collaborate and communicate with multiple users simultaneously.</p>
+            </div>
+          </a>
+        </div>
+        <!-- Feature 2: Personal Rooms -->
+        <div class="col-md-4 mb-4">
+          <a href="{% url 'private_url' %}" class="text-decoration-none text-reset">
+            <div class="p-4 border rounded hover-shadow">
+              <i class="fas fa-user feature-icon"></i>
+              <h3>Personal Rooms</h3>
+              <p>Engage in one-on-one conversations in personal rooms for private and secure communication.</p>
+            </div>
+          </a>
+        </div>
+        <!-- Feature 3: Real-Time Messaging -->
+        <div class="col-md-4 mb-4">
+          <a href="real-time-messaging.html" class="text-decoration-none text-reset">
+            <div class="p-4 border rounded hover-shadow">
+              <i class="fas fa-comments feature-icon"></i>
+              <h3>Real-Time Messaging</h3>
+              <p>Experience lightning-fast messaging with real-time updates and notifications.</p>
+            </div>
+          </a>
+        </div>
+        <!-- Feature 4: Secure & Private -->
+        <div class="col-md-4 mb-4">
+          <a href="secure-private.html" class="text-decoration-none text-reset">
+            <div class="p-4 border rounded hover-shadow">
+              <i class="fas fa-shield-alt feature-icon"></i>
+              <h3>Secure & Private</h3>
+              <p>Your conversations are encrypted and protected with top-notch security measures.</p>
+            </div>
+          </a>
+        </div>
+        <!-- Feature 5: Multi-Platform -->
+        <div class="col-md-4 mb-4">
+          <a href="multi-platform.html" class="text-decoration-none text-reset">
+            <div class="p-4 border rounded hover-shadow">
+              <i class="fas fa-mobile-alt feature-icon"></i>
+              <h3>Multi-Platform</h3>
+              <p>Stay connected on all your devices, including mobile, tablet, and desktop.</p>
+            </div>
+          </a>
+        </div>
+        <!-- Feature 6: Customization -->
+        <div class="col-md-4 mb-4">
+          <a href="customization.html" class="text-decoration-none text-reset">
+            <div class="p-4 border rounded hover-shadow">
+              <i class="fas fa-paint-brush feature-icon"></i>
+              <h3>Customization</h3>
+              <p>Personalize your chat experience with customizable themes and settings.</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="bg-light py-5">
+    <div class="container text-center">
+      <h2>Ready to Chat?</h2>
+      <p class="lead mb-4">Join thousands of users who are already enjoying seamless communication.</p>
+      <a href="#" class="btn btn-primary btn-lg hover-signup" data-bs-toggle="modal" data-bs-target="#signupModal">Get Started</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container text-center">
+      <p>&copy; 2024 ChatApp. All rights reserved.</p>
+      <div>
+        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+        <a href="#" class="text-white"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">Login to ChatApp</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="loginForm" action="{% url 'login' %}" method="POST">
+            {% csrf_token %}
+            <!-- Email Input -->
+            <div class="mb-3">
+              <label for="loginEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="loginEmail" placeholder="name@example.com" name="email" required>
+            </div>
+            <!-- Password Input -->
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="loginPassword" placeholder="Password" name="password" required>
+            </div>
+            <!-- Remember Me Checkbox -->
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="rememberMe">
+              <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <small class="text-muted">Don't have an account? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#signupModal">Sign Up</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup Modal -->
+  <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="signupModalLabel">Sign Up for ChatApp</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="signupForm"  action="{% url 'registration' %}" method='POST'>
+            {% csrf_token %}
+            <!-- Name Input -->
+            <div class="mb-3">
+              <label for="signupName" class="form-label">UserName</label>
+              <input type="text" class="form-control" id="signupName" placeholder="John Doe" name="username" required>
+            </div>
+            <!-- Email Input -->
+            <div class="mb-3">
+              <label for="signupEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="signupEmail" placeholder="name@example.com" name="email" required>
+            </div>
+            <!-- Password Input -->
+            <div class="mb-3">
+              <label for="signupPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="signupPassword" placeholder="Password" name="password1" required>
+            </div>
+            <!-- Confirm Password Input -->
+            <div class="mb-3">
+              <label for="signupConfirmPassword" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="signupConfirmPassword" placeholder="Confirm Password" name="password2" required>
+            </div>
+            <!-- Terms and Conditions Checkbox -->
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="termsConditions" >
+              <label class="form-check-label" for="termsConditions">I agree to the <a href="#">Terms and Conditions</a></label>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <small class="text-muted">Already have an account? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Optional: Font Awesome JS for icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  
+  <!-- Custom JavaScript (Optional) -->
+  <script>
+    // Handle Feature Box Clicks (Optional if you want additional functionality)
+    // Example: You can load dynamic content based on the feature clicked
+  </script>
+</body>
+</html>

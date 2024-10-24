@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChatApp - All Users</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom Styles */
+
+    body {
+      padding-top: 70px; /* To prevent content from being hidden behind the navbar */
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .user-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      border: none;
+      border-radius: 12px;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
+
+    .user-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .profile-img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-right: 20px;
+      border: 2px solid #0d6efd;
+    }
+
+    .header-section {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .pagination-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    /* Modal Profile Image */
+    .modal-profile-img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-bottom: 20px;
+      border: 3px solid #0d6efd;
+    }
+
+    /* Disable pointer events for buttons when request is sent */
+    .disabled-button {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    /* Hover Effect Classes */
+    .hover-shadow {
+      border-radius: 8px; /* Rounded corners */
+      transition: box-shadow 0.3s, border 0.3s; /* Smooth transition */
+      border: 1px solid transparent; /* Initial border */
+    }
+
+    .hover-shadow:hover {
+      border: 1px solid #0d6efd; /* Blue border on hover */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow on hover */
+    }
+
+    /* Custom Hover Effects for Login and Signup Buttons */
+
+    /* Login Button Hover Effect */
+    .btn-outline-primary.hover-login:hover {
+      background-color: #0d6efd; /* Solid primary background */
+      color: #ffffff; /* White text */
+      border-color: #0d6efd; /* Solid border */
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    /* Signup Button Hover Effect */
+    .btn-primary.hover-signup:hover {
+      background-color:  #0d6efd; /* Darker shade of primary color */
+      color: #ffffff; /* White text */
+      
+      border-color: #0d6efd; /* Darker border */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Adds shadow */
+      transform: translateY(-2px); /* Slight upward movement */
+      transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+
+    /* Search Input Focus */
+    #searchInput:focus {
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+      border-color: #0d6efd;
+    }
+
+    /* Loader Spinner */
+    .loader {
+      border: 8px solid #f3f3f3; /* Light grey */
+      border-top: 8px solid #0d6efd; /* Blue */
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 50px auto;
+      display: none; /* Hidden by default */
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .profile-img {
+        width: 60px;
+        height: 60px;
+        margin-right: 15px;
+      }
+
+      .modal-profile-img {
+        width: 100px;
+        height: 100px;
+      }
+    }
+
+    /* Adjust Send Request Button */
+    .send-request-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">ChatApp</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAllUsers" 
+              aria-controls="navbarNavAllUsers" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNavAllUsers">
+        <ul class="navbar-nav align-items-center">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contacts.html">Contacts</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="sent-requests.html">Sent Requests</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="all-users.html">All Users</a>
+          </li>
+          <!-- Login Button -->
+          <li class="nav-item">
+            <a class="nav-link btn btn-outline-primary me-2 hover-login" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">
+              <i class="fas fa-sign-in-alt me-1"></i> Login
+            </a>
+          </li>
+          <!-- Signup Button -->
+          <li class="nav-item">
+            <a class="nav-link btn btn-primary text-white hover-signup" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">
+              <i class="fas fa-user-plus me-1"></i> Signup
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Loader Spinner -->
+  <div class="loader" id="loader"></div>
+
+  <!-- All Users Section -->
+  <section class="py-5">
+    <div class="container">
+      <div class="header-section">
+        <h2>All Users</h2>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
+          <i class="fas fa-user-plus me-1"></i> Add User
+        </button>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="row mb-4">
+        <div class="col-md-6 offset-md-3">
+          <div class="input-group">
+            <input type="number" class="form-control" id="searchInput" placeholder="Enter User ID to search">
+            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+              <i class="fas fa-search"></i> Search
+            </button>
+            <button class="btn btn-outline-danger" type="button" id="resetButton">
+              <i class="fas fa-times"></i> Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Count -->
+      <div class="row mb-3">
+        <div class="col text-center">
+          <h5>Total Users: <span id="userCount">0</span></h5>
+        </div>
+      </div>
+
+      <!-- All Users List -->
+      <div class="row" id="allUsersList">
+        <!-- User Cards will be dynamically injected here -->
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-controls">
+        <button class="btn btn-outline-primary me-2" id="prevPageBtn" disabled>
+          <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <span>Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
+        <button class="btn btn-outline-primary ms-2" id="nextPageBtn" disabled>
+          Next <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="bg-light py-5">
+    <div class="container text-center">
+      <h2>Ready to Chat?</h2>
+      <p class="lead mb-4">Join thousands of users who are already enjoying seamless communication.</p>
+      <a href="#" class="btn btn-primary btn-lg hover-signup" data-bs-toggle="modal" data-bs-target="#signupModal">Get Started</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container text-center">
+      <p>&copy; 2024 ChatApp. All rights reserved.</p>
+      <div>
+        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+        <a href="#" class="text-white"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Add User Modal (Optional for Adding New Users) -->
+  <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addUserForm">
+            <!-- User Name Input -->
+            <div class="mb-3">
+              <label for="addUserName" class="form-label">Full Name</label>
+              <input type="text" class="form-control" id="addUserName" placeholder="Jane Doe" required>
+            </div>
+            <!-- User Email Input -->
+            <div class="mb-3">
+              <label for="addUserEmail" class="form-label">Email Address</label>
+              <input type="email" class="form-control" id="addUserEmail" placeholder="jane@example.com" required>
+            </div>
+            <!-- User Profile Image Input -->
+            <div class="mb-3">
+              <label for="addUserImage" class="form-label">Profile Image</label>
+              <input type="file" class="form-control" id="addUserImage" accept="image/*" required>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Add User</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Profile Modal -->
+  <div class="modal fade" id="viewProfileModal" tabindex="-1" aria-labelledby="viewProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewProfileModalLabel">User Profile</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img src="https://via.placeholder.com/120" alt="Profile Image" class="modal-profile-img" id="profileImage">
+          <h4 id="profileName">User Name</h4>
+          <p class="text-muted" id="profileEmail">Email: user@example.com</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal (Same as in index.html) -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">Login to ChatApp</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="loginForm">
+            <!-- Email Input -->
+            <div class="mb-3">
+              <label for="loginEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="loginEmail" placeholder="name@example.com" required>
+            </div>
+            <!-- Password Input -->
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="loginPassword" placeholder="Password" required>
+            </div>
+            <!-- Remember Me Checkbox -->
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="rememberMe">
+              <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <small class="text-muted">Don't have an account? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#signupModal">Sign Up</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup Modal (Same as in index.html) -->
+  <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="signupModalLabel">Sign Up for ChatApp</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="signupForm">
+            <!-- Name Input -->
+            <div class="mb-3">
+              <label for="signupName" class="form-label">Full Name</label>
+              <input type="text" class="form-control" id="signupName" placeholder="John Doe" required>
+            </div>
+            <!-- Email Input -->
+            <div class="mb-3">
+              <label for="signupEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="signupEmail" placeholder="name@example.com" required>
+            </div>
+            <!-- Password Input -->
+            <div class="mb-3">
+              <label for="signupPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="signupPassword" placeholder="Password" required>
+            </div>
+            <!-- Confirm Password Input -->
+            <div class="mb-3">
+              <label for="signupConfirmPassword" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="signupConfirmPassword" placeholder="Confirm Password" required>
+            </div>
+            <!-- Terms and Conditions Checkbox -->
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="termsConditions" required>
+              <label class="form-check-label" for="termsConditions">I agree to the <a href="#">Terms and Conditions</a></label>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <small class="text-muted">Already have an account? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Font Awesome JS for Icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+  <!-- Custom JavaScript -->
+  <script>
+    // Sample Data: All Users
+    let allUsers = [
+      {
+        id: 1,
+        name: "Alice Johnson",
+        email: "alice@example.com",
+        image: "https://via.placeholder.com/80",
+        status: "Online"
+      },
+      {
+        id: 2,
+        name: "Bob Smith",
+        email: "bob@example.com",
+        image: "https://via.placeholder.com/80",
+        status: "Offline"
+      },
+      {
+        id: 3,
+        name: "Charlie Brown",
+        email: "charlie@example.com",
+        image: "https://via.placeholder.com/80",
+        status: "Online"
+      },
+      {
+        id: 4,
+        name: "Diana Prince",
+        email: "diana@example.com",
+        image: "https://via.placeholder.com/80",
+        status: "Away"
+      },
+      {
+        id: 5,
+        name: "Ethan Hunt",
+        email: "ethan@example.com",
+        image: "https://via.placeholder.com/80",
+        status: "Do Not Disturb"
+      },
+      // Add more users as needed
+    ];
+
+    // Sent Requests Array (Loaded from Local Storage)
+    let sentRequests = JSON.parse(localStorage.getItem('sentRequests')) || [];
+
+    // Pagination Variables
+    let currentPage = 1;
+    const usersPerPage = 6;
+    let totalPages = Math.ceil(allUsers.length / usersPerPage);
+
+    // Function to Render All Users
+    function renderAllUsers(filteredUsers = allUsers) {
+      const allUsersList = document.getElementById('allUsersList');
+      const userCount = document.getElementById('userCount');
+      const currentPageSpan = document.getElementById('currentPage');
+      const totalPagesSpan = document.getElementById('totalPages');
+      const loader = document.getElementById('loader');
+
+      // Show loader
+      loader.style.display = 'block';
+
+      // Simulate loading time
+      setTimeout(() => {
+        allUsersList.innerHTML = ''; // Clear existing content
+
+        // Update User Count
+        userCount.textContent = filteredUsers.length;
+
+        // Update Pagination
+        totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+        if (totalPages === 0) totalPages = 1;
+        totalPagesSpan.textContent = totalPages;
+        currentPage = Math.min(currentPage, totalPages);
+        currentPageSpan.textContent = currentPage;
+
+        // Determine the users to display on the current page
+        const startIndex = (currentPage - 1) * usersPerPage;
+        const endIndex = startIndex + usersPerPage;
+        const usersToDisplay = filteredUsers.slice(startIndex, endIndex);
+
+        if (usersToDisplay.length === 0) {
+          allUsersList.innerHTML = `
+            <div class="col-12">
+              <p class="text-center text-muted">No users found with the provided ID.</p>
+            </div>
+          `;
+        } else {
+          usersToDisplay.forEach((user, index) => {
+            // Check if a request has already been sent to this user
+            const isRequested = sentRequests.some(request => request.email === user.email);
+
+            const userCard = document.createElement('div');
+            userCard.classList.add('col-md-4', 'mb-4');
+            userCard.innerHTML = `
+              <div class="card user-card shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                  <img src="${user.image}" alt="${user.name}" class="profile-img">
+                  <div class="me-auto">
+                    <h5 class="mb-1">${user.name}</h5>
+                    <p class="mb-0 text-muted">Email: ${user.email}</p>
+                    <p class="mb-0 text-muted">ID: ${user.id}</p>
+                  </div>
+                  <button class="btn ${isRequested ? 'btn-secondary disabled-button' : 'btn-primary'} btn-sm send-request-btn" data-index="${startIndex + index}">
+                    <i class="fas fa-paper-plane me-1"></i> ${isRequested ? 'Requested' : 'Send Request'}
+                  </button>
+                </div>
+              </div>
+            `;
+            allUsersList.appendChild(userCard);
+          });
+
+          // Attach event listeners to send request buttons
+          const sendRequestButtons = document.querySelectorAll('.send-request-btn');
+          sendRequestButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+              e.stopPropagation(); // Prevent triggering card click
+              const index = e.target.getAttribute('data-index');
+              sendChatRequest(index);
+            });
+          });
+
+          // Attach event listeners to user cards for viewing profiles
+          const userCards = document.querySelectorAll('.user-card');
+          userCards.forEach((card, idx) => {
+            card.addEventListener('click', () => {
+              viewProfile(startIndex + idx);
+            });
+          });
+        }
+
+        // Hide loader
+        loader.style.display = 'none';
+
+        // Update Pagination Buttons
+        updatePaginationControls(filteredUsers.length);
+      }, 500); // Adjust the timeout as needed
+    }
+
+    // Function to Send Chat Request
+    function sendChatRequest(index) {
+      const user = allUsers[index];
+
+      // Check if request already sent
+      const alreadyRequested = sentRequests.some(request => request.email === user.email);
+      if (alreadyRequested) {
+        alert('You have already sent a request to this user.');
+        return;
+      }
+
+      // Create new request object
+      const newRequest = {
+        id: user.id, // Include user ID in the request
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        status: "Pending"
+      };
+
+      // Add to sentRequests array
+      sentRequests.push(newRequest);
+
+      // Save to Local Storage
+      localStorage.setItem('sentRequests', JSON.stringify(sentRequests));
+
+      // Re-render All Users to update the button state
+      renderAllUsers();
+
+      // Optionally, alert the user
+      alert(`Chat request sent to ${user.name}.`);
+    }
+
+    // Function to View Profile
+    function viewProfile(index) {
+      const user = allUsers[index];
+      document.getElementById('profileImage').src = user.image;
+      document.getElementById('profileName').textContent = user.name;
+      document.getElementById('profileEmail').textContent = `Email: ${user.email}`;
+      // Show the modal
+      const viewProfileModal = new bootstrap.Modal(document.getElementById('viewProfileModal'));
+      viewProfileModal.show();
+    }
+
+    // Function to Handle Search
+    function handleSearch() {
+      const searchInput = document.getElementById('searchInput').value.trim();
+      const loader = document.getElementById('loader');
+
+      // Show loader
+      loader.style.display = 'block';
+
+      // Simulate loading time
+      setTimeout(() => {
+        if (searchInput === '') {
+          renderAllUsers(); // If input is empty, show all users
+          loader.style.display = 'none';
+          return;
+        }
+
+        // Convert input to number
+        const searchId = parseInt(searchInput, 10);
+        if (isNaN(searchId)) {
+          alert('Please enter a valid numerical ID.');
+          loader.style.display = 'none';
+          return;
+        }
+
+        // Filter users by ID
+        const filteredUsers = allUsers.filter(user => user.id === searchId);
+        renderAllUsers(filteredUsers);
+
+        // Hide loader
+        loader.style.display = 'none';
+      }, 500); // Adjust the timeout as needed
+    }
+
+    // Function to Reset Search
+    function handleReset() {
+      document.getElementById('searchInput').value = '';
+      renderAllUsers();
+    }
+
+    // Function to Update Pagination Controls
+    function updatePaginationControls(totalUsers) {
+      const prevPageBtn = document.getElementById('prevPageBtn');
+      const nextPageBtn = document.getElementById('nextPageBtn');
+
+      // Enable or disable Previous button
+      if (currentPage > 1) {
+        prevPageBtn.disabled = false;
+      } else {
+        prevPageBtn.disabled = true;
+      }
+
+      // Enable or disable Next button
+      if (currentPage < totalPages) {
+        nextPageBtn.disabled = false;
+      } else {
+        nextPageBtn.disabled = true;
+      }
+    }
+
+    // Function to Handle Previous Page
+    function handlePrevPage(filteredUsers = allUsers) {
+      if (currentPage > 1) {
+        currentPage--;
+        renderAllUsers(filteredUsers);
+      }
+    }
+
+    // Function to Handle Next Page
+    function handleNextPage(filteredUsers = allUsers) {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderAllUsers(filteredUsers);
+      }
+    }
+
+    // Function to Get Status Badge Class (Removed as status is no longer displayed)
+    // function getStatusBadge(status) {
+    //   switch(status) {
+    //     case 'Online':
+    //       return 'bg-success';
+    //     case 'Offline':
+    //       return 'bg-secondary';
+    //     case 'Away':
+    //       return 'bg-warning text-dark';
+    //     case 'Do Not Disturb':
+    //       return 'bg-danger';
+    //     default:
+    //       return 'bg-secondary';
+    //   }
+    // }
+
+    // Initialize All Users on Page Load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAllUsers();
+
+      // Handle Add User Form Submission
+      const addUserForm = document.getElementById('addUserForm');
+      addUserForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const name = document.getElementById('addUserName').value.trim();
+        const email = document.getElementById('addUserEmail').value.trim();
+        const imageInput = document.getElementById('addUserImage');
+        const imageFile = imageInput.files[0];
+
+        if (!name || !email || !imageFile) {
+          alert('Please fill in all fields and select a profile image.');
+          return;
+        }
+
+        // Read the image as Data URL
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const imageURL = event.target.result;
+
+          // Generate a new unique ID
+          const newId = allUsers.length > 0 ? allUsers[allUsers.length - 1].id + 1 : 1;
+
+          // Create new user object
+          const newUser = {
+            id: newId,
+            name: name,
+            email: email,
+            image: imageURL,
+            status: "Offline" // Default status
+          };
+
+          // Add to allUsers array
+          allUsers.push(newUser);
+
+          // Re-render all users list
+          renderAllUsers();
+
+          // Reset the form
+          addUserForm.reset();
+
+          // Close the modal
+          const addUserModal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+          addUserModal.hide();
+
+          // Optionally, alert the user
+          alert(`User ${name} added successfully with ID ${newId}.`);
+        };
+        reader.readAsDataURL(imageFile);
+      });
+
+      // Handle Search Button Click
+      document.getElementById('searchButton').addEventListener('click', handleSearch);
+
+      // Handle Enter Key Press in Search Input
+      document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          handleSearch();
+        }
+      });
+
+      // Handle Reset Button Click
+      document.getElementById('resetButton').addEventListener('click', handleReset);
+
+      // Handle Previous Page Button Click
+      document.getElementById('prevPageBtn').addEventListener('click', () => {
+        const searchInput = document.getElementById('searchInput').value.trim();
+        if (searchInput === '') {
+          handlePrevPage();
+        } else {
+          const searchId = parseInt(searchInput, 10);
+          if (!isNaN(searchId)) {
+            const filteredUsers = allUsers.filter(user => user.id === searchId);
+            handlePrevPage(filteredUsers);
+          }
+        }
+      });
+
+      // Handle Next Page Button Click
+      document.getElementById('nextPageBtn').addEventListener('click', () => {
+        const searchInput = document.getElementById('searchInput').value.trim();
+        if (searchInput === '') {
+          handleNextPage();
+        } else {
+          const searchId = parseInt(searchInput, 10);
+          if (!isNaN(searchId)) {
+            const filteredUsers = allUsers.filter(user => user.id === searchId);
+            handleNextPage(filteredUsers);
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

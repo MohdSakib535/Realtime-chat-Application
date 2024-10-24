@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChatApp - Personal Chat Interface</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Optional: Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom Styles */
+
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+    }
+
+    .chat-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: row;
+      padding-top: 60px; /* To account for fixed navbar */
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 300px;
+      background-color: #343a40;
+      color: #ffffff;
+      padding-top: 20px;
+      overflow-y: auto;
+      border-right: 1px solid #495057;
+    }
+
+    .sidebar .friend-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .sidebar .friend-item:hover {
+      background-color: #495057;
+    }
+
+    .sidebar .friend-item.active {
+      background-color: #0d6efd;
+    }
+
+    .sidebar .friend-item img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 15px;
+      object-fit: cover;
+    }
+
+    .sidebar .friend-item .friend-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar .friend-item .friend-info .friend-name {
+      font-weight: bold;
+    }
+
+    .sidebar .friend-item .friend-info .friend-status {
+      font-size: 0.9rem;
+      color: #adb5bd;
+    }
+
+    /* Chat Window */
+    .chat-window {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      background-color: #ffffff;
+    }
+
+    .chat-header {
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    .chat-header img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin-right: 15px;
+      object-fit: cover;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+
+    .message.sent {
+      align-items: flex-end;
+    }
+
+    .message.received {
+      align-items: flex-start;
+    }
+
+    .message .message-text {
+      padding: 10px 15px;
+      border-radius: 15px;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+
+    .message.sent .message-text {
+      background-color: #0d6efd;
+      color: #ffffff;
+    }
+
+    .message.received .message-text {
+      background-color: #f1f0f0;
+      color: #000000;
+    }
+
+    /* Chat Input */
+    .chat-input {
+      border-top: 1px solid #dee2e6;
+      padding-top: 10px;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 250px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .sidebar {
+        display: none; /* Hide sidebar on small screens */
+      }
+      .chat-container {
+        flex-direction: column;
+      }
+      .chat-window {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">ChatApp</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav align-items-center">
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn btn-primary text-white ms-3" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Signup</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Chat Container -->
+  <div class="chat-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h5 class="text-center mb-4">Friends</h5>
+      <div class="list-group list-group-flush">
+        <!-- Example Friend Items -->
+        <div class="list-group-item friend-item active" data-friend-id="1">
+          <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Friend 1">
+          <div class="friend-info">
+            <span class="friend-name">John Doe</span>
+            <span class="friend-status"><i class="fas fa-circle text-success me-1"></i>Online</span>
+          </div>
+        </div>
+        <div class="list-group-item friend-item" data-friend-id="2">
+          <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Friend 2">
+          <div class="friend-info">
+            <span class="friend-name">Jane Smith</span>
+            <span class="friend-status"><i class="fas fa-circle text-secondary me-1"></i>Offline</span>
+          </div>
+        </div>
+        <div class="list-group-item friend-item" data-friend-id="3">
+          <img src="https://randomuser.me/api/portraits/men/56.jpg" alt="Friend 3">
+          <div class="friend-info">
+            <span class="friend-name">Mike Johnson</span>
+            <span class="friend-status"><i class="fas fa-circle text-success me-1"></i>Online</span>
+          </div>
+        </div>
+        <!-- Add more friends as needed -->
+      </div>
+    </div>
+
+    <!-- Chat Window -->
+    <div class="chat-window">
+      <!-- Chat Header -->
+      <div class="chat-header d-flex align-items-center">
+        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Current Friend" id="currentFriendAvatar">
+        <div>
+          <h5 id="currentFriendName">John Doe</h5>
+          <span id="currentFriendStatus"><i class="fas fa-circle text-success me-1"></i>Online</span>
+        </div>
+      </div>
+
+      <!-- Chat Messages -->
+      <div class="chat-messages" id="chatMessages">
+        <!-- Example Messages -->
+        <div class="message received">
+          <div class="message-text">
+            Hello! How are you today?
+          </div>
+        </div>
+        <div class="message sent">
+          <div class="message-text">
+            Hi John! I'm doing well, thanks for asking.
+          </div>
+        </div>
+        <!-- More messages will appear here -->
+      </div>
+
+      <!-- Chat Input -->
+      <div class="chat-input">
+        <form id="messageForm">
+          <div class="input-group">
+            <input type="text" class="form-control" id="messageInput" placeholder="Type your message..." required>
+            <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">Login to ChatApp</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="loginForm">
+            <!-- Email Input -->
+            <div class="mb-3">
+              <label for="loginEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="loginEmail" placeholder="name@example.com" required>
+            </div>
+            <!-- Password Input -->
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="loginPassword" placeholder="Password" required>
+            </div>
+            <!-- Remember Me Checkbox -->
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="rememberMe">
+              <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <small class="text-muted">Don't have an account? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#signupModal">Sign Up</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup Modal -->
+  <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="signupModalLabel">Sign Up for ChatApp</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="signupForm">
+            <!-- Name Input -->
+            <div class="mb-3">
+              <label for="signupName" class="form-label">Full Name</label>
+              <input type="text" class="form-control" id="signupName" placeholder="John Doe" required>
+            </div>
+            <!-- Email Input -->
+            <div class="mb-3">
+              <label for="signupEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="signupEmail" placeholder="name@example.com" required>
+            </div>
+            <!-- Password Input -->
+            <div class="mb-3">
+              <label for="signupPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="signupPassword" placeholder="Password" required>
+            </div>
+            <!-- Confirm Password Input -->
+            <div class="mb-3">
+              <label for="signupConfirmPassword" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="signupConfirmPassword" placeholder="Confirm Password" required>
+            </div>
+            <!-- Terms and Conditions Checkbox -->
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="termsConditions" required>
+              <label class="form-check-label" for="termsConditions">I agree to the <a href="#">Terms and Conditions</a></label>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <small class="text-muted">Already have an account? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Optional: Font Awesome JS for icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <!-- Custom JavaScript -->
+  <script>
+    // Handle Friend Selection
+    const friendItems = document.querySelectorAll('.friend-item');
+    const currentFriendName = document.getElementById('currentFriendName');
+    const currentFriendAvatar = document.getElementById('currentFriendAvatar');
+    const currentFriendStatus = document.getElementById('currentFriendStatus');
+    const chatMessages = document.getElementById('chatMessages');
+
+    // Dummy Chat Histories for Friends
+    const chatHistories = {
+      1: [
+        { type: 'received', text: 'Hello! How are you today?' },
+        { type: 'sent', text: "Hi John! I'm doing well, thanks for asking." }
+      ],
+      2: [
+        { type: 'received', text: 'Hey Jane, long time no see!' },
+        { type: 'sent', text: "Hi Mike! Indeed, it's been a while." }
+      ],
+      3: [
+        { type: 'received', text: 'Good morning, Mike!' },
+        { type: 'sent', text: 'Good morning! Ready for the game tonight?' }
+      ]
+      // Add more chat histories as needed
+    };
+
+    friendItems.forEach(friend => {
+      friend.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Remove active class from all friends
+        friendItems.forEach(f => f.classList.remove('active'));
+        // Add active class to selected friend
+        this.classList.add('active');
+        // Update current friend details
+        const friendName = this.querySelector('.friend-name').textContent;
+        const friendAvatar = this.querySelector('img').src;
+        const friendStatus = this.querySelector('.friend-status').innerHTML;
+
+        currentFriendName.textContent = friendName;
+        currentFriendAvatar.src = friendAvatar;
+        currentFriendStatus.innerHTML = friendStatus;
+
+        // Load chat history
+        const friendId = this.getAttribute('data-friend-id');
+        loadChatHistory(friendId);
+      });
+    });
+
+    // Function to Load Chat History
+    function loadChatHistory(friendId) {
+      chatMessages.innerHTML = ''; // Clear existing messages
+      const history = chatHistories[friendId] || [];
+      history.forEach(msg => {
+        appendMessage(msg.type, msg.text);
+      });
+      // Scroll to bottom
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Function to Append Message
+    function appendMessage(type, text) {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message', type === 'sent' ? 'sent' : 'received');
+      messageElement.innerHTML = `
+        <div class="message-text">
+          ${text}
+        </div>
+      `;
+      chatMessages.appendChild(messageElement);
+    }
+
+    // Handle Message Sending
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+
+    messageForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (message === '') return;
+
+      // Append sent message
+      appendMessage('sent', message);
+      // Scroll to bottom
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      // Clear input
+      messageInput.value = '';
+
+      // Simulate a received message (for demo purposes)
+      setTimeout(() => {
+        appendMessage('received', 'This is an automated response.');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }, 1000);
+    });
+
+    // Optional: Handle Login and Signup Form Submissions
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Implement login functionality here
+      alert('Login functionality is not implemented.');
+      // Close modal after login
+      const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+      loginModal.hide();
+    });
+
+    signupForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Implement signup functionality here
+      alert('Signup functionality is not implemented.');
+      // Close modal after signup
+      const signupModal = bootstrap.Modal.getInstance(document.getElementById('signupModal'));
+      signupModal.hide();
+    });
+
+    // Initialize Chat with First Friend
+    document.addEventListener('DOMContentLoaded', () => {
+      if (friendItems.length > 0) {
+        friendItems[0].click();
+      }
+    });
+  </script>
+</body>
+</html>

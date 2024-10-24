@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChatApp - Group Chat Interface</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom Styles */
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+    }
+
+    .chat-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: row;
+      padding-top: 60px; /* To account for fixed navbar */
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background-color: #343a40;
+      color: #ffffff;
+      padding-top: 20px;
+      overflow-y: auto;
+    }
+
+    .sidebar .list-group-item {
+      background-color: #343a40;
+      color: #ffffff;
+      border: none;
+    }
+
+    .sidebar .list-group-item.active {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+
+    /* Chat Window */
+    .chat-window {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      background-color: #ffffff;
+    }
+
+    .chat-header {
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* Chat Messages */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+
+    .message.sent {
+      align-items: flex-end;
+    }
+
+    .message.received {
+      align-items: flex-start;
+    }
+
+    .message .message-text {
+      padding: 10px 15px;
+      border-radius: 15px;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+
+    .message.sent .message-text {
+      background-color: #0d6efd;
+      color: #ffffff;
+    }
+
+    .message.received .message-text {
+      background-color: #f1f0f0;
+      color: #000000;
+    }
+
+    /* Chat Input */
+    .chat-input {
+      border-top: 1px solid #dee2e6;
+      padding-top: 10px;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 200px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .sidebar {
+        display: none; /* Hide sidebar on small screens */
+      }
+      .chat-container {
+        flex-direction: column;
+      }
+      .chat-window {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">ChatApp</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav align-items-center">
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn btn-primary text-white ms-3" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Signup</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Chat Container -->
+  <div class="chat-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h5 class="text-center mb-4">Chat Rooms</h5>
+      <div class="list-group list-group-flush">
+        {% for room in groups %}
+        <a href="#" class="list-group-item list-group-item-action" data-room="{{ room.title }}">
+          <i class="fas fa-users me-2"></i> {{ room.title }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    <input type="hidden" id="currentUsername" value="{{ current_user.username }}">
+
+    <!-- Chat Window -->
+    <div class="chat-window">
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <h5 id="currentRoom">Select a Chat Room</h5>
+      </div>
+
+      <!-- Chat Messages -->
+      <div class="chat-messages" id="chatMessages">
+        <h1>Welcome to chat room please select your room</h1>
+      
+      </div>
+
+      <!-- Chat Input -->
+      <div class="chat-input">
+        <form id="messageForm">
+          <div class="input-group">
+            <input type="text" class="form-control" id="messageInput" placeholder="Type your message..." required>
+            <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <!-- ... (Your existing login modal code) ... -->
+
+  <!-- Signup Modal -->
+  <!-- ... (Your existing signup modal code) ... -->
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Font Awesome JS for icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <!-- Custom JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const chatRooms = document.querySelectorAll('.list-group-item');
+      const currentRoom = document.getElementById('currentRoom');
+      const chatMessages = document.getElementById('chatMessages');
+
+      const messageForm = document.getElementById('messageForm');
+      const messageInput = document.getElementById('messageInput');
+
+      chatRooms.forEach(room => {
+        room.addEventListener('click', function(e) {
+          e.preventDefault();
+          // Update current room title
+          const roomName = this.getAttribute('data-room');
+          currentRoom.textContent = roomName;
+
+          // Fetch existing messages via Axios
+          axios.get(`chat/${roomName}/`)
+            .then(response => {
+              const data = response.data;
+              chatMessages.innerHTML = '';  // Clear existing messages
+              data.messages.forEach(msg => {
+                const messageElement = document.createElement('div');
+                const smallmsg=document.createElement('small')
+
+
+                messageElement.classList.add('message', msg.user_name === data.current_user ? 'sent' : 'received');
+
+                messageElement.innerHTML = `
+                  <div class="message-text">
+                    <small class="text-muted" style='font-size:10px;'>${msg.user_name}</small><br>
+                    <strong>${msg.content}</strong>
+                  </div>
+                `;
+                chatMessages.appendChild(messageElement);
+              });
+              chatMessages.scrollTop = chatMessages.scrollHeight; // Auto scroll to bottom
+            })
+            .catch(error => {
+              console.error('Error fetching messages:', error);
+            });
+
+          ws = new WebSocket(`ws://${window.location.host}/ws/chat/${roomName}/`);
+          console.log(ws);
+
+          ws.onopen=function(){
+          console.log('websocket connection is open.....');
+          }
+          const currentUsername = document.getElementById('currentUsername').value;
+          ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        
+        
+        if(data.type === 'user_join'){
+          showNotification(data.message, '#28a745');
+        } else if (data.type === 'user_leave') {
+          showNotification(data.message, '#dc3545');  // Red for leave
+
+        }else{
+
+        const data = JSON.parse(event.data);
+        const messageElement = document.createElement('div');
+
+        if (data.user_name === currentUsername) {
+          console.log('if');
+          
+          messageElement.classList.add('message', 'sent'); // Sent message
+        } else {
+          console.log('else');
+          
+          messageElement.classList.add('message', 'received'); // Received message
+        }
+
+        messageElement.innerHTML = `
+          
+         
+          <div class="message-text">
+             <small class="text-muted" style='font-size:10px;'>${data.user_name}</small><br>
+
+            ${data.message}
+          </div>
+        `;
+
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.appendChild(messageElement);
+
+
+        // chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight; // Auto scroll to bottom
+        }
+
+
+        function showNotification(message, bgColor) {
+          const notification = document.createElement('div');
+
+          notification.classList.add('user-notification');
+          notification.textContent = message;
+
+          // Style the notification (centered at the top of the chat window)
+          notification.style.position = 'fixed';
+          notification.style.top = '10px';
+          notification.style.left = '50%';
+          notification.style.transform = 'translateX(-50%)';
+          notification.style.padding = '10px 20px';
+          notification.style.backgroundColor = bgColor; // Dynamically set background color
+          notification.style.color = '#fff';
+          notification.style.borderRadius = '5px';
+          notification.style.zIndex = '9999';
+
+          // Append the notification to the body
+          document.body.appendChild(notification);
+
+          // Remove the notification after 3 seconds
+          setTimeout(() => {
+              notification.remove();
+          }, 3000);
+      }
+
+
+
+
+
+
+
+      };
+  
+        
+        });
+      });
+
+      // Handle sending messages
+      messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (message === '') return;
+
+        // Example WebSocket message send logic (if applicable)
+        ws.send(JSON.stringify({ 'message': message }));
+        messageInput.value = '';
+      });
+
+
+
+
+      // handle messages from input
+
+
+    });
+  </script>
+</body>
+</html>

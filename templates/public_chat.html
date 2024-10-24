@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChatApp - Group Chat Interface</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Optional: Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom Styles */
+
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+    }
+
+    .chat-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: row;
+      padding-top: 60px; /* To account for fixed navbar */
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background-color: #343a40;
+      color: #ffffff;
+      padding-top: 20px;
+      overflow-y: auto;
+    }
+
+    .sidebar .list-group-item {
+      background-color: #343a40;
+      color: #ffffff;
+      border: none;
+    }
+
+    .sidebar .list-group-item.active {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+
+    /* Chat Window */
+    .chat-window {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      background-color: #ffffff;
+    }
+
+    .chat-header {
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* Updated Chat Messages to Use Flexbox */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+
+    .message.sent {
+      align-items: flex-end;
+    }
+
+    .message.received {
+      align-items: flex-start;
+    }
+
+    .message .message-text {
+      padding: 10px 15px;
+      border-radius: 15px;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+
+    .message.sent .message-text {
+      background-color: #0d6efd;
+      color: #ffffff;
+    }
+
+    .message.received .message-text {
+      background-color: #f1f0f0;
+      color: #000000;
+    }
+
+    /* Chat Input */
+    .chat-input {
+      border-top: 1px solid #dee2e6;
+      padding-top: 10px;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 200px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .sidebar {
+        display: none; /* Hide sidebar on small screens */
+      }
+      .chat-container {
+        flex-direction: column;
+      }
+      .chat-window {
+        padding: 10px;
+      }
+    }
+
+
+      .user-join-notification {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: #fff;
+      border-radius: 5px;
+      z-index: 9999;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">ChatApp</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav align-items-center">
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn btn-primary text-white ms-3" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Signup</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Chat Container -->
+  <div class="chat-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h5 class="text-center mb-4">Chat Rooms</h5>
+      <div class="list-group list-group-flush">
+        {% for room in groups %}
+        <a href="#" class="list-group-item list-group-item-action " data-room={{room.title}}>
+          <i class="fas fa-users me-2"></i> {{room.title}}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <input type="hidden" id="currentUsername" value="{{ current_user.username }}">
+
+    <!-- Chat Window -->
+    <div class="chat-window">
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <h5 id="currentRoom">Welcome Public chat room</h5>
+      </div>
+
+      <!-- Chat Messages -->
+      <div class="chat-messages" id="chatMessages">
+      </div>
+
+      <!-- Chat Input -->
+      <div class="chat-input">
+        <form id="messageForm">
+          <div class="input-group">
+            <input type="text" class="form-control" id="messageInput" placeholder="Type your message..." required>
+            <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">Login to ChatApp</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="loginForm">
+            <!-- Email Input -->
+            <div class="mb-3">
+              <label for="loginEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="loginEmail" placeholder="name@example.com" required>
+            </div>
+            <!-- Password Input -->
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="loginPassword" placeholder="Password" required>
+            </div>
+            <!-- Remember Me Checkbox -->
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="rememberMe">
+              <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <small class="text-muted">Don't have an account? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#signupModal">Sign Up</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup Modal -->
+  <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="signupModalLabel">Sign Up for ChatApp</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="signupForm">
+            <!-- Name Input -->
+            <div class="mb-3">
+              <label for="signupName" class="form-label">Full Name</label>
+              <input type="text" class="form-control" id="signupName" placeholder="John Doe" required>
+            </div>
+            <!-- Email Input -->
+            <div class="mb-3">
+              <label for="signupEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="signupEmail" placeholder="name@example.com" required>
+            </div>
+            <!-- Password Input -->
+            <div class="mb-3">
+              <label for="signupPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="signupPassword" placeholder="Password" required>
+            </div>
+            <!-- Confirm Password Input -->
+            <div class="mb-3">
+              <label for="signupConfirmPassword" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="signupConfirmPassword" placeholder="Confirm Password" required>
+            </div>
+            <!-- Terms and Conditions Checkbox -->
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="termsConditions" required>
+              <label class="form-check-label" for="termsConditions">I agree to the <a href="#">Terms and Conditions</a></label>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <small class="text-muted">Already have an account? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Optional: Font Awesome JS for icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <!-- Custom JavaScript -->
+  <script>
+
+
+const chatRooms = document.querySelectorAll('.list-group-item');
+const currentRoom = document.getElementById('currentRoom');
+const chatMessages = document.getElementById('chatMessages');
+
+chatRooms.forEach(room => {
+  room.addEventListener('click', function(e) {
+    e.preventDefault();
+    // Remove active class from all rooms
+    chatRooms.forEach(r => r.classList.remove('active'));
+    // Add active class to selected room
+    this.classList.add('active');
+    // Update current room title
+    const roomName = this.getAttribute('data-room');
+    console.log(roomName);
+    
+    currentRoom.textContent = this.textContent.trim();
+
+    // Clear existing chat messages
+    chatMessages.innerHTML = '';
+    // Open new WebSocket connection for the selected chat room
+    ws = new WebSocket(`ws://${window.location.host}/ws/chat/${roomName}/`);
+
+    ws.onopen=function(){
+    console.log('websocket connection is open.....');
+    
+  }
+
+  const currentUsername = document.getElementById('currentUsername').value;
+  
+
+    // Handle WebSocket messages (incoming messages)
+    ws.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      
+      if(data.type === 'user_join'){
+        
+        const joinNotification = document.createElement('div');
+
+        joinNotification.classList.add('user-join-notification');
+        joinNotification.textContent = data.message;
+
+        // Style the notification (centered at the top of the chat window)
+        joinNotification.style.position = 'fixed';
+        joinNotification.style.top = '10px';
+        joinNotification.style.left = '50%';
+        joinNotification.style.transform = 'translateX(-50%)';
+        joinNotification.style.padding = '10px 20px';
+        joinNotification.style.backgroundColor = '#28a745';
+        joinNotification.style.color = '#fff';
+        joinNotification.style.borderRadius = '5px';
+        joinNotification.style.zIndex = '9999';
+
+        // Append the notification to the body
+        document.body.appendChild(joinNotification);
+
+        // Remove the notification after 3 seconds
+        setTimeout(() => {
+          joinNotification.remove();
+        }, 3000);
+
+
+
+      }else{
+
+      const data = JSON.parse(event.data);
+      
+      
+      const messageElement = document.createElement('div');
+      print('data user-----',data.user_name)
+
+      if (data.user_name === currentUsername) {
+        console.log('if');
+        
+        messageElement.classList.add('message', 'sent'); // Sent message
+      } else {
+        console.log('else');
+        
+        messageElement.classList.add('message', 'received'); // Received message
+      }
+
+      messageElement.innerHTML = `
+        <div class="message-text">
+          ${data.message}
+        </div>
+      `;
+
+      const chatMessages = document.getElementById('chatMessages');
+      chatMessages.appendChild(messageElement);
+
+
+      // chatMessages.appendChild(messageElement);
+      chatMessages.scrollTop = chatMessages.scrollHeight; // Auto scroll to bottom
+      }
+    };
+  });
+});
+
+// Handle sending messages via WebSocket
+const messageForm = document.getElementById('messageForm');
+const messageInput = document.getElementById('messageInput');
+
+messageForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const message = messageInput.value.trim();
+  if (message === '') return;
+
+  // Send message via WebSocket
+  ws.send(JSON.stringify({ 'message': message }));
+  messageInput.value = '';
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Optional: Handle Login and Signup Form Submissions
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Implement login functionality here
+      alert('Login functionality is not implemented.');
+      // Close modal after login
+      const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+      loginModal.hide();
+    });
+
+    signupForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Implement signup functionality here
+      alert('Signup functionality is not implemented.');
+      // Close modal after signup
+      const signupModal = bootstrap.Modal.getInstance(document.getElementById('signupModal'));
+      signupModal.hide();
+    });
+  </script>
+</body>
+</html>
