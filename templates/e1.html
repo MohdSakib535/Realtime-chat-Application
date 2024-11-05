@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explore People - ChatApp</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <style>
+    /* General Styles */
+    body {
+      padding-top: 70px; /* To prevent content from hiding behind fixed navbar */
+      background-color: #f4f7fb;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Sticky Header for Search and Toggle Buttons */
+    .sticky-header {
+      position: sticky;
+      top: 70px; /* Height of the navbar */
+      background: #fff;
+      z-index: 1000;
+      padding: 10px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    /* Toggle Buttons Styling */
+    .sticky-header .d-flex .btn {
+      width: 150px;
+      font-weight: bold;
+      position: relative;
+    }
+
+    .sticky-header .d-flex .btn.active {
+      /* Active button styling */
+      background-color: #0d6efd;
+      color: #fff;
+    }
+
+    /* Search Input Styling */
+    .search-container {
+      max-width: 400px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .search-container input {
+      width: 100%;
+      padding: 10px 40px 10px 15px;
+      border-radius: 20px;
+      border: 1px solid #ced4da;
+      transition: border-color 0.3s;
+    }
+
+    .search-container input:focus {
+      border-color: #0d6efd;
+      outline: none;
+    }
+
+    .search-container .fa-search {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+
+    /* User Card Styling */
+    .user-card {
+      background-color: #fff;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+      padding: 15px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+    }
+
+    .user-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-card img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-right: 15px;
+      border: 2px solid #0d6efd;
+    }
+
+    .user-info {
+      flex-grow: 1;
+    }
+
+    .user-info .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .user-info .card-text {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 10px;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-btn {
+      font-size: 1rem;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-btn.add {
+      background-color: #0d6efd;
+      color: #fff;
+    }
+
+    .action-btn.add:hover {
+      background-color: #0056b3;
+    }
+
+    .action-btn.requested {
+      background-color: #6c757d;
+      color: #fff;
+      cursor: not-allowed;
+    }
+
+    /* Loader Styling */
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0d6efd;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Infinite Scroll Loader */
+    #infiniteLoader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 0;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 576px) {
+      .search-container {
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar (Reuse the existing navbar) -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="#">ChatApp</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="#">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Features</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="exploreNav">Explore</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn btn-primary text-white ms-3" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Signup</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Explore Section -->
+  <section class="container my-5">
+    <h2 class="text-center mb-4">Explore New People</h2>
+
+    <!-- Sticky Header for Search and Toggle Buttons -->
+    <div class="sticky-header">
+      <!-- Toggle Buttons for Friends, Requests, and Explore -->
+      <div class="d-flex justify-content-center mb-3">
+        <button class="btn btn-outline-primary me-2" id="friendsBtn">
+          <i class="fas fa-users me-1"></i>Friends
+          <span class="badge bg-primary rounded-pill ms-1" id="friendsBadge">2</span>
+        </button>
+        <button class="btn btn-outline-primary me-2" id="requestsBtn">
+          <i class="fas fa-user-plus me-1"></i>Requests
+          <span class="badge bg-danger rounded-pill ms-1" id="requestsBadge">4</span>
+        </button>
+        <button class="btn btn-primary" id="exploreBtn">
+          <i class="fas fa-compass me-1"></i>Explore
+        </button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search for people...">
+        <i class="fas fa-search"></i>
+      </div>
+    </div>
+
+    <!-- Users List -->
+    <div class="row mt-4" id="usersList">
+      <!-- User Cards will be injected here -->
+      {% for user in all_user %}
+      <div class="col-md-4 mb-4">
+        <div class="user-card" data-user-id="{{ user.id }}">
+          <img src="{{ user.img }}" alt="{{ user.name }}">
+          <div class="user-info">
+            <h5 class="card-title">{{ user.name }}</h5>
+            <p class="card-text">{{ user.email }}</p>
+          </div>
+          <div class="action-buttons">
+            {% if user.isFriend %}
+              <button class="btn btn-secondary action-btn requested" disabled>
+                <i class="fas fa-user-check me-1"></i>Friend
+              </button>
+            {% else %}
+              <button class="btn btn-primary action-btn add" data-user-id="{{ user.id }}">
+                <i class="fas fa-user-plus me-1"></i>Add
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Infinite Scroll Loader -->
+    <div id="infiniteLoader" class="d-none">
+      <div class="loader"></div>
+    </div>
+
+    <!-- No Results Message -->
+    <div class="text-center mt-3 d-none" id="noResultsMessage">
+      <p>No users found.</p>
+    </div>
+  </section>
+
+  <!-- Friend Request Modal -->
+  <div class="modal fade" id="friendRequestModal" tabindex="-1" aria-labelledby="friendRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="friendRequestModalLabel">Friend Request</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="modalMessage">You have a new friend request.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Decline</button>
+          <button type="button" class="btn btn-primary" id="acceptRequestBtn">Accept</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050">
+    <div id="notificationContainer" class="toast-container">
+      <!-- Toast notifications will be appended here dynamically -->
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Font Awesome JS for icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+  <!-- Custom JavaScript -->
+  <script>
+    // Sample Data for Users (Replace with API calls in a real app)
+    let allUsers = [
+      { id: 1, name: 'Jane Smith', email: 'jane.smith@example.com', img: 'https://via.placeholder.com/150', isFriend: true },
+      { id: 2, name: 'Michael Brown', email: 'michael.brown@example.com', img: 'https://via.placeholder.com/150', isFriend: true },
+      { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com', img: 'https://via.placeholder.com/150', isFriend: false },
+      { id: 4, name: 'Tom White', email: 'tom.white@example.com', img: 'https://via.placeholder.com/150', isFriend: false },
+      { id: 5, name: 'Emily Davis', email: 'emily.davis@example.com', img: 'https://via.placeholder.com/150', isFriend: false },
+      { id: 6, name: 'Robert Wilson', email: 'robert.wilson@example.com', img: 'https://via.placeholder.com/150', isFriend: false },
+      { id: 7, name: 'Sophia Martinez', email: 'sophia.martinez@example.com', img: 'https://via.placeholder.com/150', isFriend: false },
+      { id: 8, name: 'Daniel Garcia', email: 'daniel.garcia@example.com', img: 'https://via.placeholder.com/150', isFriend: false },
+      { id: 9, name: 'Olivia Lee', email: 'olivia.lee@example.com', img: 'https://via.placeholder.com/150', isFriend: false },
+      { id: 10, name: 'Ethan Kim', email: 'ethan.kim@example.com', img: 'https://via.placeholder.com/150', isFriend: false },
+      // Add more users as needed
+    ];
+
+    // Pagination Variables (For Infinite Scroll)
+    let currentPage = 1;
+    const usersPerPage = 6;
+    let isLoading = false;
+    let allUsersLoaded = false;
+
+    // WebSocket Setup
+    let socket;
+
+    // Function to Initialize WebSocket Connection
+    // function initializeWebSocket() {
+    //   // Replace 'ws://' with 'wss://' for HTTPS in production
+    //   socket = new WebSocket('ws://' + window.location.host + '/ws/friend-requests/');
+
+    //   socket.onopen = function() {
+    //     console.log('WebSocket connection established.');
+    //   };
+
+    //   socket.onmessage = function(e) {
+    //     const data = JSON.parse(e.data);
+    //     handleWebSocketMessage(data);
+    //   };
+
+    //   socket.onclose = function(e) {
+    //     console.log('WebSocket connection closed.');
+    //   };
+
+    //   socket.onerror = function(err) {
+    //     console.error('WebSocket error:', err);
+    //   };
+    // }
+
+    // Function to Handle Incoming WebSocket Messages
+    function handleWebSocketMessage(data) {
+      if (data.type === 'friend_request') {
+        displayFriendRequestNotification(data.message, data.sender);
+      } else if (data.type === 'error') {
+        displayToast(data.message, 'bg-danger');
+      }
+      // Handle other message types as needed
+    }
+
+    // Function to Create and Show Toast Notifications
+    function displayToast(message, bgColor) {
+      const notificationContainer = document.getElementById('notificationContainer');
+
+      const toast = document.createElement('div');
+      toast.classList.add('toast', 'align-items-center', 'text-white', bgColor, 'border-0');
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">
+            ${message}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+
+      notificationContainer.appendChild(toast);
+
+      const bsToast = new bootstrap.Toast(toast);
+      bsToast.show();
+
+      // Remove the toast from DOM after it's hidden
+      toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+      });
+    }
+
+    // Function to Display Friend Request Notifications
+    function displayFriendRequestNotification(message, sender) {
+      // Show a toast notification
+      displayToast(message, 'bg-info');
+
+      // Show a modal for detailed interaction
+      showFriendRequestModal(message, sender);
+    }
+
+    // Function to Show Friend Request Modal
+    function showFriendRequestModal(message, sender) {
+      const modalMessage = document.getElementById('modalMessage');
+      modalMessage.textContent = message;
+
+      const acceptBtn = document.getElementById('acceptRequestBtn');
+      acceptBtn.onclick = function() {
+        acceptFriendRequest(sender);
+      };
+
+      // Show the modal
+      const friendRequestModal = new bootstrap.Modal(document.getElementById('friendRequestModal'));
+      friendRequestModal.show();
+    }
+
+    // Function to Accept Friend Request
+    function acceptFriendRequest(sender) {
+      // Implement accept logic, possibly via AJAX or WebSocket
+      // For demonstration, we'll just display a toast
+      displayToast(`You are now friends with ${sender}.`, 'bg-success');
+
+      // Close the modal
+      const friendRequestModal = bootstrap.Modal.getInstance(document.getElementById('friendRequestModal'));
+      friendRequestModal.hide();
+
+      // Optionally, update the UI or send a confirmation to the server
+    }
+
+    // Function to Update Badges
+    function updateBadges() {
+      const friendsBadge = document.getElementById('friendsBadge');
+      const requestsBadge = document.getElementById('requestsBadge');
+      const friendsCount = allUsers.filter(user => user.isFriend).length;
+      const requestsCount = allUsers.filter(user => !user.isFriend).length;
+      friendsBadge.textContent = friendsCount;
+      requestsBadge.textContent = requestsCount;
+    }
+
+    // Function to Render Users
+    function renderUsers(users) {
+      const usersList = document.getElementById('usersList');
+      const noResultsMessage = document.getElementById('noResultsMessage');
+      usersList.innerHTML = '';
+
+      if (users.length === 0) {
+        noResultsMessage.classList.remove('d-none');
+        return;
+      } else {
+        noResultsMessage.classList.add('d-none');
+      }
+
+      users.forEach(user => {
+        const col = document.createElement('div');
+        col.classList.add('col-md-4', 'mb-4');
+
+        const card = document.createElement('div');
+        card.classList.add('user-card');
+        card.setAttribute('data-user-id', user.id);
+
+        card.innerHTML = `
+          <img src="${user.img}" alt="${user.name}">
+          <div class="user-info">
+            <h5 class="card-title">${user.name}</h5>
+            <p class="card-text">${user.email}</p>
+          </div>
+          <div class="action-buttons">
+            ${user.isFriend ? 
+              `<button class="btn btn-secondary action-btn requested" disabled>
+                <i class="fas fa-user-check me-1"></i>Friend
+              </button>` : 
+              `<button class="btn btn-primary action-btn add" data-user-id="${user.id}">
+                <i class="fas fa-user-plus me-1"></i>Add
+              </button>`
+            }
+          </div>
+        `;
+
+        col.appendChild(card);
+        usersList.appendChild(col);
+      });
+    }
+
+    // Function to Load More Users (For Infinite Scroll)
+    function loadMoreUsers() {
+      if (isLoading || allUsersLoaded) return;
+      isLoading = true;
+      document.getElementById('infiniteLoader').classList.remove('d-none');
+
+      // Simulate API call delay
+      setTimeout(() => {
+        const start = (currentPage - 1) * usersPerPage;
+        const end = start + usersPerPage;
+        const usersToLoad = allUsers.slice(start, end);
+        
+        if (usersToLoad.length === 0) {
+          allUsersLoaded = true;
+        } else {
+          renderUsers(usersToLoad);
+          currentPage++;
+        }
+
+        isLoading = false;
+        document.getElementById('infiniteLoader').classList.add('d-none');
+      }, 1000); // Simulated delay
+    }
+
+    // Event Listener for Add Friend Buttons
+    document.getElementById('usersList').addEventListener('click', function(event) {
+      if (event.target.matches('.action-btn.add') || event.target.closest('.action-btn.add')) {
+        const button = event.target.closest('.action-btn.add');
+        const userId = parseInt(button.getAttribute('data-user-id'));
+        const userName = button.closest('.user-card').querySelector('.card-title').textContent;
+        sendFriendRequest(userId, userName, button);
+      }
+    });
+
+    // Function to Send Friend Request via WebSocket
+    function sendFriendRequest(userId, userName, button) {
+      // Send friend request via WebSocket
+      socket.send(JSON.stringify({
+        'type': 'send_request',
+        'user_id': userId
+      }));
+
+      // Optimistic UI Update
+      button.classList.remove('btn-primary', 'add');
+      button.classList.add('btn-secondary', 'requested');
+      button.innerHTML = `<i class="fas fa-user-check me-1"></i>Friend`;
+      button.disabled = true;
+
+      // Show Toast Notification
+      displayToast(`Friend request sent to ${userName}.`, 'bg-primary');
+    }
+
+    // Search Functionality with Debounce
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      const query = this.value.toLowerCase();
+      searchTimeout = setTimeout(() => {
+        const filteredUsers = allUsers.filter(user => 
+          user.name.toLowerCase().includes(query) || 
+          user.email.toLowerCase().includes(query)
+        );
+        renderUsers(filteredUsers);
+      }, 300); // 300ms debounce
+    });
+
+    // Toggle Between Friends, Requests, and Explore
+    document.getElementById('friendsBtn').addEventListener('click', () => {
+      setActiveButton('friendsBtn');
+      const friendsList = allUsers.filter(user => user.isFriend);
+      renderUsers(friendsList);
+    });
+
+    document.getElementById('requestsBtn').addEventListener('click', () => {
+      setActiveButton('requestsBtn');
+      const requestsList = allUsers.filter(user => !user.isFriend);
+      renderUsers(requestsList);
+    });
+
+    document.getElementById('exploreBtn').addEventListener('click', () => {
+      setActiveButton('exploreBtn');
+      renderUsers(allUsers.slice(0, currentPage * usersPerPage));
+    });
+
+    // Function to Set Active Button
+    function setActiveButton(activeBtnId) {
+      const buttons = ['friendsBtn', 'requestsBtn', 'exploreBtn'];
+      buttons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btnId === activeBtnId) {
+          btn.classList.add('active', 'btn-primary');
+          btn.classList.remove('btn-outline-primary');
+        } else {
+          btn.classList.remove('active', 'btn-primary');
+          btn.classList.add('btn-outline-primary');
+        }
+      });
+    }
+
+    // Infinite Scroll Implementation
+    window.addEventListener('scroll', () => {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
+        loadMoreUsers();
+      }
+    });
+
+    // Initialize WebSocket Connection
+    initializeWebSocket();
+
+    // Initial Render
+    document.addEventListener('DOMContentLoaded', () => {
+      renderUsers(allUsers.slice(0, usersPerPage));
+      currentPage++;
+      updateBadges();
+    });
+  </script>
+</body>
+</html>

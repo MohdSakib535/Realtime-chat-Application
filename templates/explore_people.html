@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explore People - ChatApp</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <style>
+    /* General Styles */
+    body {
+      padding-top: 70px; /* To prevent content from hiding behind fixed navbar */
+      background-color: #f4f7fb;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Sticky Header for Search and Toggle Buttons */
+    .sticky-header {
+      position: sticky;
+      top: 70px; /* Height of the navbar */
+      background: #fff;
+      z-index: 1000;
+      padding: 10px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    /* Search Input Styling */
+    .search-container {
+      max-width: 400px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .search-container input {
+      width: 100%;
+      padding: 10px 40px 10px 15px;
+      border-radius: 20px;
+      border: 1px solid #ced4da;
+      transition: border-color 0.3s;
+    }
+
+    .search-container input:focus {
+      border-color: #0d6efd;
+      outline: none;
+    }
+
+    .search-container .search-icon {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+
+    /* Enhanced User Card Styling */
+    .user-card {
+      background-color: #fff;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+      padding: 15px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      height: 100%; /* Ensures uniform height */
+    }
+
+    .user-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-card img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid #0d6efd;
+    }
+
+    .user-info h5.card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .user-info p.card-text {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 10px;
+    }
+
+    .action-buttons {
+      /* Ensure buttons don't overflow */
+      flex-shrink: 0;
+    }
+
+    /* Loader Styling */
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0d6efd;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Infinite Scroll Loader */
+    #infiniteLoader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 0;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 576px) {
+      .search-container {
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="#">ChatApp</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="#">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Features</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="exploreNav">Explore</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn btn-primary text-white ms-3" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Signup</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Explore Section -->
+  <section class="container my-5">
+    <h2 class="text-center mb-4">Explore New People</h2>
+
+    <!-- Sticky Header for Search and Tabs -->
+    <div class="sticky-header">
+      <!-- Search Input -->
+      <div class="search-container mb-3">
+        <input type="text" id="searchInput" placeholder="Search for people...">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <ul class="nav nav-tabs justify-content-center mb-3" id="exploreTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="friends-tab" data-bs-toggle="tab" data-bs-target="#friends" type="button" role="tab" aria-controls="friends" aria-selected="true">
+            <i class="fas fa-users me-1"></i>Friends
+            <span class="badge bg-primary rounded-pill ms-1" id="friendsBadge">2</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="false">
+            <i class="fas fa-user-plus me-1"></i>Requests
+            <span class="badge bg-danger rounded-pill ms-1" id="requestsBadge">4</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="explore-tab" data-bs-toggle="tab" data-bs-target="#explore" type="button" role="tab" aria-controls="explore" aria-selected="false">
+            <i class="fas fa-compass me-1"></i>Explore
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Tab Content Panes -->
+    <div class="tab-content" id="exploreTabsContent">
+      
+      <!-- Friends Tab Pane -->
+      <div class="tab-pane fade show active" id="friends" role="tabpanel" aria-labelledby="friends-tab">
+        <div class="row mt-4" id="friendsList">
+          <!-- Friend User Cards will be injected here -->
+          <!-- Example Friend Card -->
+
+          {% if friends %}
+          <h2>yes</h2>
+          {% for i in friends  %}
+          <div class="col-md-4 mb-4">
+           <div class="user-card d-flex flex-column">
+             <div class="d-flex align-items-center">
+               <img src="https://via.placeholder.com/60" alt="Jane Smith">
+               <div class="user-info ms-3">
+                 <h5 class="card-title mb-0">{{i.username}}</h5>
+                 <p class="card-text mb-0">{{i.email}}</p>
+               </div>
+             </div>
+             <div class="mt-3">
+               <button class="btn btn-secondary btn-sm requested" disabled>
+                 <i class="fas fa-user-check me-1"></i>Friend
+               </button>
+             </div>
+           </div>
+         </div>
+           
+          {% endfor %}
+          {% else %}
+          <div class="text-center mt-3" id="friendsNoResultsMessage">
+            <p>You have no friends yet.</p>
+          </div>
+          {% endif %}
+           
+          
+            
+          
+          <!-- Repeat similar blocks for other friends -->
+        </div>
+        <!-- Infinite Scroll Loader -->
+        <div id="friendsInfiniteLoader" class="d-none">
+          <div class="loader"></div>
+        </div>
+        <!-- No Results Message -->
+        
+      </div>
+      
+      <!-- Requests Tab Pane -->
+      <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+        <div class="row mt-4" id="requestsList">
+          <!-- Friend Request User Cards will be injected here -->
+          <!-- Example Request Card -->
+          {% for i in request_data %}
+          <div class="col-md-4 mb-4">
+            <div class="user-card d-flex flex-column">
+              <div class="d-flex align-items-center">
+                <img src="https://via.placeholder.com/60" alt="John Doe">
+                <div class="user-info ms-3">
+                  <h5 class="card-title mb-0">{{i.sender.username}}</h5>
+                  <p class="card-text mb-0">{{i.receiver.email}}</p>
+                </div>
+              </div>
+              <div class="mt-3 action-buttons d-flex justify-content-between">
+                <button class="btn btn-success btn-sm accept-btn">
+                  <i class="fas fa-check me-1"></i>Accept
+                </button>
+                <button class="btn btn-danger btn-sm decline-btn">
+                  <i class="fas fa-times me-1"></i>Decline
+                </button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          <!-- Repeat similar blocks for other requests -->
+        </div>
+        <!-- Infinite Scroll Loader -->
+        <div id="requestsInfiniteLoader" class="d-none">
+          <div class="loader"></div>
+        </div>
+        <!-- No Results Message -->
+        <div class="text-center mt-3 d-none" id="requestsNoResultsMessage">
+          <p>No incoming friend requests.</p>
+        </div>
+      </div>
+      
+      <!-- Explore Tab Pane -->
+      <div class="tab-pane fade" id="explore" role="tabpanel" aria-labelledby="explore-tab">
+        <div class="row mt-4" id="exploreList">
+          <!-- Explore User Cards will be injected here -->
+          <!-- Example Explore Card -->
+
+          {% for i in all_user %}
+            <div class="col-md-4 mb-4 ">
+                <div class="user-card d-flex flex-column">
+                <div class="d-flex align-items-center">
+                    <img src="https://via.placeholder.com/60" alt="Emily Davis">
+                    <div class="user-info ms-3">
+                    <h5 class="card-title mb-0">{{i.username}}</h5>
+                    <p class="card-text mb-0">{{i.email}}</p>
+                    </div>
+                </div>
+                <div class="mt-3 action-buttons">
+                    <input type="hidden" value={{i.id}} id="user_id-{{ i.id }}">
+                    <button class="btn btn-primary btn-sm add-btn" id="add_request-{{i.id}}" data-user-id="{{ i.id }}">
+                    <i class="fas fa-user-plus me-1"></i>Adds
+                    </button>
+                </div>
+                </div>
+            </div>
+            {% endfor %}
+          <!-- Repeat similar blocks for other explore users -->
+        </div>
+        <!-- Infinite Scroll Loader -->
+        <div id="exploreInfiniteLoader" class="d-none">
+          <div class="loader"></div>
+        </div>
+        <!-- No Results Message -->
+        <div class="text-center mt-3 d-none" id="exploreNoResultsMessage">
+          <p>No users found.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Toast Notification Container -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    <div id="liveToast" class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body" id="toastMessage">
+          <!-- Message will be inserted here -->
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Friend Request Modal -->
+  <div class="modal fade" id="friendRequestModal" tabindex="-1" aria-labelledby="friendRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="friendRequestModalLabel">Friend Request</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="modalMessage">You have a new friend request.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Decline</button>
+          <button type="button" class="btn btn-primary" id="acceptRequestBtn">Accept</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Font Awesome JS for icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <!-- Custom JavaScript -->
+    <script>
+    
+
+    // Pagination Variables (For Infinite Scroll)
+    let currentPage = {
+      friends: 1,
+      requests: 1,
+      explore: 1
+    };
+    const usersPerPage = 6;
+    let isLoading = {
+      friends: false,
+      requests: false,
+      explore: false
+    };
+    // let allUsersLoaded = {
+    //   friends: false,
+    //   requests: false,
+    //   explore: false
+    // };
+
+    // WebSocket Setup
+    let socket;
+
+    // Function to Initialize WebSocket Connection
+    function initializeWebSocket() {
+      // Replace 'ws://' with 'wss://' for HTTPS in production
+      socket = new WebSocket('ws://' + window.location.host + '/ws/friend-requests/');
+      console.log('web-----',socket);
+      
+
+      socket.onopen = function() {
+        console.log('WebSocket connection established.');
+      };
+
+      socket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        // console.log("--data-------",data);
+        // console.log("--data---send----",data.sender.username);
+        
+        if (data.type === 'friend_request') {
+          addFriendRequestToList(data.sender, data.reciever);
+          // displayFriendRequestNotification(data.message, data.sender);
+        } else if (data.type === 'error') {
+          showToast(data.message, 'bg-danger');
+        }  
+        // Handle other message types as needed
+      };
+
+      document.querySelectorAll('.add-btn').forEach(button => {
+      button.addEventListener('click', function () {
+        const targetuserId = this.getAttribute('data-user-id'); // Get the specific user's ID from data attribute
+        console.log('User ID:', targetuserId); // Verify that the correct ID is being captured
+
+        // Send the user ID over the WebSocket connection
+        socket.send(JSON.stringify({
+            'target_user_id': targetuserId,
+            'type':'send_request'
+        }));
+
+
+
+        // Optionally, update the UI for the clicked button
+        this.classList.remove('btn-primary');
+        this.classList.add('btn-secondary');
+        this.disabled = true;
+        this.innerHTML = `<i class="fas fa-user-check me-1"></i>Friend`;
+    });
+});
+
+
+      socket.onclose = function(e) {
+        console.log('WebSocket connection closed.');
+      };
+
+      socket.onerror = function(err) {
+        console.error('WebSocket error:', err);
+      };
+    }
+
+
+
+
+   
+     // Function to add a new friend request to the "Requests" list
+     function addFriendRequestToList(sender, reciever) {
+      
+    const requestsList = document.getElementById('requestsList'); // Container for friend requests
+
+    // Create the main container for the request card
+    const colDiv = document.createElement('div');
+    colDiv.className = 'col-md-4 mb-4';
+
+    // Create the user card container
+    const userCardDiv = document.createElement('div');
+    userCardDiv.className = 'user-card d-flex flex-column';
+
+    // Create the user details section
+    const userDetailsDiv = document.createElement('div');
+    userDetailsDiv.className = 'd-flex align-items-center';
+
+    // User profile picture (placeholder)
+    const userImg = document.createElement('img');
+    userImg.src = 'https://via.placeholder.com/60'; // Replace with actual image URL if available
+    userImg.alt = sender.username;
+    userImg.className = 'user-img';
+
+    // User information container
+    const userInfoDiv = document.createElement('div');
+    userInfoDiv.className = 'user-info ms-3';
+
+    const userName = document.createElement('h5');
+    userName.className = 'card-title mb-0';
+    userName.textContent = sender.username;
+
+    const userEmail = document.createElement('p');
+    userEmail.className = 'card-text mb-0';
+    userEmail.textContent = sender.email; // Replace with actual email if available
+
+    // Append user details to the user info section
+    userInfoDiv.appendChild(userName);
+    userInfoDiv.appendChild(userEmail);
+    userDetailsDiv.appendChild(userImg);
+    userDetailsDiv.appendChild(userInfoDiv);
+
+    // Create action buttons container
+    const actionButtonsDiv = document.createElement('div');
+    actionButtonsDiv.className = 'mt-3 action-buttons d-flex justify-content-between';
+
+    // Accept button
+    const acceptBtn = document.createElement('button');
+    acceptBtn.className = 'btn btn-success btn-sm accept-btn';
+    acceptBtn.innerHTML = '<i class="fas fa-check me-1"></i>Accept';
+    acceptBtn.addEventListener('click', () => handleFriendRequest(fromUserId, 'accept'));
+
+    // Decline button
+    const declineBtn = document.createElement('button');
+    declineBtn.className = 'btn btn-danger btn-sm decline-btn';
+    declineBtn.innerHTML = '<i class="fas fa-times me-1"></i>Decline';
+    declineBtn.addEventListener('click', () => handleFriendRequest(fromUserId, 'decline'));
+
+    // Append buttons to the action buttons container
+    actionButtonsDiv.appendChild(acceptBtn);
+    actionButtonsDiv.appendChild(declineBtn);
+
+    // Assemble the card
+    userCardDiv.appendChild(userDetailsDiv);
+    userCardDiv.appendChild(actionButtonsDiv);
+    colDiv.appendChild(userCardDiv);
+
+    // Add the card to the top of the requests list
+    requestsList.prepend(colDiv);
+}
+
+
+     
+
+
+
+// Function to handle friend request actions (accept/decline)
+function handleFriendRequest(userId, action) {
+    // Example: Implement your API call or WebSocket message here to handle the friend request
+    console.log(`${action === 'accept' ? 'Accepted' : 'Declined'} friend request from user ID: ${userId}`);
+    // Update the UI or send an AJAX/WebSocket request as needed
+}
+
+
+
+
+    // Function to Render Requests
+    function renderRequests(users) {
+      const requestsList = document.getElementById('requestsList');
+      const requestsNoResultsMessage = document.getElementById('requestsNoResultsMessage');
+      requestsList.innerHTML = '';
+
+      if (users.length === 0) {
+        requestsNoResultsMessage.classList.remove('d-none');
+        return;
+      } else {
+        requestsNoResultsMessage.classList.add('d-none');
+      }
+
+      users.forEach(user => {
+        const col = document.createElement('div');
+        col.classList.add('col-md-4', 'mb-4');
+
+        const card = document.createElement('div');
+        card.classList.add('user-card', 'd-flex', 'flex-column');
+
+        card.innerHTML = `
+          <div class="d-flex align-items-center">
+            <img src="${user.img}" alt="${user.name}">
+            <div class="user-info ms-3">
+              <h5 class="card-title mb-0">${user.name}</h5>
+              <p class="card-text mb-0">${user.email}</p>
+            </div>
+          </div>
+          <div class="mt-3 action-buttons d-flex justify-content-between">
+            <button class="btn btn-success btn-sm accept-btn">
+              <i class="fas fa-check me-1"></i>Accept
+            </button>
+            <button class="btn btn-danger btn-sm decline-btn">
+              <i class="fas fa-times me-1"></i>Decline
+            </button>
+          </div>
+        `;
+
+        // Add event listeners to Accept and Decline buttons
+        card.querySelector('.accept-btn').addEventListener('click', () => {
+          acceptFriendRequest(user.id);
+        });
+
+        card.querySelector('.decline-btn').addEventListener('click', () => {
+          declineFriendRequest(user.id);
+        });
+
+        col.appendChild(card);
+        requestsList.appendChild(col);
+      });
+    }
+
+
+    // Function to Show Toast Notifications
+    function showToast(message, bgColor) {
+      const toastEl = document.getElementById('liveToast');
+      const toastMessage = document.getElementById('toastMessage');
+
+      toastMessage.textContent = message;
+      toastEl.className = `toast align-items-center text-white ${bgColor} border-0`;
+
+      const toast = new bootstrap.Toast(toastEl);
+      toast.show();
+    }
+
+    // Function to Display Friend Request Notifications
+    function displayFriendRequestNotification(message, sender) {
+      // Show a toast notification
+      showToast(message, 'bg-info');
+
+      // Optionally, update the Requests tab in real-time
+      // For example, prepend the new request to the requestsList
+      // Here, we'll simply re-render the Requests tab
+      // In a real app, you'd fetch the updated requests from the server
+      const newRequest = { id: Date.now(), name: sender, email: `${sender.toLowerCase().replace(' ', '.')}@example.com`, img: 'https://via.placeholder.com/60', isFriend: false };
+      console.log("new request-------",newRequest);
+      
+      allUsers.push(newRequest);
+      renderRequests(allUsers.filter(u => !u.isFriend));
+      updateBadges();
+    }
+
+    // Event Listener for Add Friend Buttons
+    function sendFriendRequest(userId, userName, button) {
+      // Send friend request via WebSocket
+      socket.send(JSON.stringify({
+        'type': 'send_request',
+        'user_id': userId
+      }));
+
+      // Optimistic UI Update
+      button.classList.remove('btn-primary', 'add-btn');
+      button.classList.add('btn-secondary', 'requested');
+      button.innerHTML = `<i class="fas fa-user-check me-1"></i>Friend`;
+      button.disabled = true;
+
+      // Show Toast Notification
+      showToast(`Friend request sent to ${userName}.`, 'bg-primary');
+    }
+
+    // Function to Accept Friend Request
+    function acceptFriendRequest(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (user) {
+        user.isFriend = true;
+        // Optionally, send accept request to the server via WebSocket or AJAX
+        renderRequests(allUsers.filter(u => !u.isFriend));
+        // renderFriends(allUsers.filter(u => u.isFriend));
+        // updateBadges();
+        showToast(`You are now friends with ${user.name}.`, 'bg-success');
+      }
+    }
+
+    // Function to Decline Friend Request
+    function declineFriendRequest(userId) {
+      // Remove the user from allUsers (assuming declining removes the request)
+      allUsers = allUsers.filter(u => u.id !== userId);
+      // Optionally, send decline request to the server via WebSocket or AJAX
+      renderRequests(allUsers.filter(u => !u.isFriend));
+      updateBadges();
+      showToast(`Friend request declined.`, 'bg-warning');
+    }
+
+    // Initialize WebSocket Connection
+    initializeWebSocket();
+
+    // Initial Render
+    document.addEventListener('DOMContentLoaded', () => {
+    //   renderFriends(allUsers.filter(u => u.isFriend).slice(0, usersPerPage));
+    //   renderRequests(allUsers.filter(u => !u.isFriend).slice(0, usersPerPage));
+    //   renderExplore(allUsers.slice(0, usersPerPage));
+    //   currentPage.friends++;
+    //   currentPage.requests++;
+    //   currentPage.explore++;
+    //   updateBadges();
+        
+    });
+  </script> 
+</body>
+</html>

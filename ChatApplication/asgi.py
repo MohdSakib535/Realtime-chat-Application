@@ -11,7 +11,8 @@ import os
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter,URLRouter
-import globalchat.routing
+from Notification.routing import websocket_urlpatterns_notification as notification_chat_url
+from globalchat.routing import websocket_urlpattern as public_chat_url
 from channels.auth import AuthMiddlewareStack
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ChatApplication.settings')
@@ -20,7 +21,9 @@ application = ProtocolTypeRouter({
     'http':get_asgi_application(),
     'websocket':AuthMiddlewareStack(
         URLRouter(
-        globalchat.routing.websocket_urlpattern
+        public_chat_url+
+        notification_chat_url
+        
     )
     )
     

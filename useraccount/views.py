@@ -1,9 +1,11 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from django.contrib.auth import login, authenticate, logout
-
+from rest_framework import routers ,viewsets
 from useraccount.models import CustomUser
+from useraccount.serializers import user_account_Serializers
 # Create your views here.
+
 
 def home(request):
     return render(request,'home.html')
@@ -20,8 +22,17 @@ def Requested_list(request):
 def Add_people(request):
     return render(request,'addpeople.html')
 
+
+
 def UserProfile(request):
-    return render(request,'userProfile.html')
+    context={}
+    user=request.user
+    print('------',user)
+    profile_data=CustomUser.objects.get(username=user)
+    context['user_profile']=profile_data
+    print('pro-----',profile_data)
+
+    return render(request,'userProfile.html',context)
 
 
 
@@ -68,3 +79,10 @@ def Login(request):
     return render(request,'home.html')
 
 
+"""
+API
+"""
+
+class UserAccountView(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = user_account_Serializers

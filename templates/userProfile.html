@@ -6,16 +6,25 @@
   <title>User Profile - ChatApp</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Optional: Font Awesome for icons -->
+  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     /* Custom Styles */
-
     body {
-      padding-top: 70px; /* To prevent content from hiding behind fixed navbar */
+      padding-top: 70px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7fb;
     }
 
-    /* Profile Picture Styling */
+    /* Profile Section Styling */
+    .profile-section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
     .profile-img {
       width: 150px;
       height: 150px;
@@ -30,43 +39,178 @@
       cursor: pointer;
     }
 
-    /* Friends List Styling */
-    .friend-card {
-      transition: transform 0.2s;
+    .profile-info h2 {
+      font-weight: 700;
+      margin-bottom: 10px;
     }
 
-    .friend-card:hover {
-      transform: scale(1.05);
+    .profile-info p {
+      margin-bottom: 5px;
     }
 
-    /* Modal Image Styling */
-    .modal-img {
-      width: 50px;
-      height: 50px;
+    /* Toggle Buttons Styling */
+    .toggle-buttons {
+      position: sticky;
+      top: 100px;
+      background: #fff;
+      z-index: 10;
+      padding: 10px 0;
+      border-bottom: 1px solid #dee2e6;
+      margin-bottom: 20px;
+    }
+
+    .toggle-buttons .btn {
+      width: 150px;
+      font-weight: bold;
+      position: relative;
+    }
+
+    /* Notification Badge */
+    .toggle-buttons .btn .badge {
+      position: absolute;
+      top: -5px;
+      right: -10px;
+    }
+
+    /* Modern Card for Friend and Request Lists */
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 10px; /* For scrollbar space */
+    }
+
+    .card {
+      display: flex;
+      align-items: center;
+      background-color: #fff;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+      padding: 15px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card img {
+      width: 60px;
+      height: 60px;
       object-fit: cover;
       border-radius: 50%;
+      margin-right: 15px;
+      border: 2px solid #0d6efd;
     }
 
-    /* Additional Styling */
+    .card-body {
+      flex-grow: 1;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .card-text {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 10px;
+    }
+
+    .action-icons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-icon {
+      font-size: 1.2rem;
+      color: #6c757d;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .action-icon:hover {
+      color: #0d6efd;
+    }
+
+    /* Search Input Styling */
+    .search-container {
+      max-width: 300px;
+      margin: 0 auto 20px auto;
+      position: relative;
+    }
+
+    .search-container input {
+      width: 100%;
+      padding: 10px 40px 10px 15px;
+      border-radius: 20px;
+      border: 1px solid #ced4da;
+      transition: border-color 0.3s;
+    }
+
+    .search-container input:focus {
+      border-color: #0d6efd;
+      outline: none;
+    }
+
+    .search-container .search-icon {
+      position: absolute;
+      right: 25px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+
+    /* Responsive Scrollbar Styling */
+    /* For WebKit browsers */
+    .card-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .card-container::-webkit-scrollbar-track {
+      background: #f1f1f1; 
+      border-radius: 10px;
+    }
+
+    .card-container::-webkit-scrollbar-thumb {
+      background: #0d6efd; 
+      border-radius: 10px;
+    }
+
+    .card-container::-webkit-scrollbar-thumb:hover {
+      background: #0056b3; 
+    }
+
+    /* Remove scrollbar for IE, Edge and Firefox */
+    .card-container {
+      scrollbar-width: thin;
+      scrollbar-color: #0d6efd #f1f1f1;
+    }
+
+    /* Add Friend Button */
     .add-friend-btn {
       position: fixed;
       bottom: 30px;
       right: 30px;
+      background-color: #0d6efd;
+      color: #fff;
+      font-size: 1.5rem;
+      border-radius: 50%;
+      padding: 15px;
+      cursor: pointer;
+      transition: transform 0.3s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       z-index: 1000;
     }
 
-    /* Profile Info Styling */
-    .profile-info h2 {
-      font-weight: 700;
-    }
-
-    .profile-info p.text-muted {
-      font-size: 1rem;
-    }
-
-    .profile-info p.bio {
-      font-size: 1rem;
-      margin-top: 10px;
+    .add-friend-btn:hover {
+      transform: scale(1.1);
     }
   </style>
 </head>
@@ -75,23 +219,19 @@
   <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
     <div class="container">
-      <a class="navbar-brand" href="index.html">ChatApp</a>
+      <a class="navbar-brand" href="#">ChatApp</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
               aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav align-items-center">
+        <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="index.html">Home</a>
+            <a class="nav-link" href="#">Home</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#">Features</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Pricing</a>
-          </li>
-          <!-- Login and Signup (if needed) -->
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
           </li>
@@ -104,66 +244,64 @@
   </nav>
 
   <!-- User Profile Section -->
-  <section class="py-5">
-    <div class="container">
-      <div class="row align-items-center">
-        <!-- Profile Picture -->
-        <div class="col-md-4 text-center mb-4 mb-md-0">
-          <img src="https://via.placeholder.com/150" alt="User Profile Picture" class="profile-img" id="userProfileImg" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-        </div>
-        <!-- User Information -->
-        <div class="col-md-8 profile-info">
-          <h2 id="userName">John Doe</h2>
-          <p class="text-muted" id="userEmail">john.doe@example.com</p>
-          <p class="bio" id="userBio">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-          <!-- Edit Profile Button -->
-          <button class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i class="fas fa-edit me-2"></i>Edit Profile</button>
-        </div>
+  <section class="profile-section container my-5">
+    <div class="row">
+      <div class="col-md-4 text-center">
+        <img src="https://via.placeholder.com/150" alt="User Profile Picture" class="profile-img" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+      </div>
+      <div class="col-md-8 profile-info">
+        <h2 id="userName">{{user_profile.username}}</h2>
+        <p class="text-muted" id="userEmail">{{user_profile.email}}</p>
+        <p id="userBio">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        <button class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+          <i class="fas fa-edit me-2"></i>Edit Profile
+        </button>
       </div>
     </div>
   </section>
 
+  <!-- Toggle Buttons for Friends and Requests -->
+  <div class="container toggle-buttons">
+    <button class="btn btn-outline-primary active m-3" id="friendsBtn">
+      Friends
+      <span class="badge bg-info rounded-pill" id="friendsBadge">2</span>
+    </button>
+    <button class="btn btn-outline-primary" id="requestsBtn">
+      Requests
+      <span class="badge bg-danger rounded-pill" id="requestsBadge">4</span>
+    </button>
+  </div>
+
+  <!-- Search Input -->
+  <div class="container search-container">
+    <i class="fas fa-search search-icon"></i>
+    <input type="text" id="searchInput" placeholder="Search friends or requests..." />
+</div>
+
   <!-- Friends List Section -->
-  <section class="py-5 bg-light">
-    <div class="container">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>Your Friends</h3>
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFriendModal"><i class="fas fa-user-plus me-2"></i>Add Friend</button>
-      </div>
-      <div class="row" id="friendsList">
-        <!-- Friend Card Example -->
-        <div class="col-md-4 mb-4" id="friend-1">
-          <div class="card friend-card">
-            <div class="card-body d-flex align-items-center">
-              <img src="https://via.placeholder.com/50" alt="Friend 1" class="modal-img me-3">
-              <div class="flex-grow-1">
-                <h5 class="card-title mb-0">Jane Smith</h5>
-                <small class="text-muted">jane.smith@example.com</small>
-              </div>
-              <button class="btn btn-danger btn-sm remove-friend-btn" data-friend-id="1"><i class="fas fa-trash-alt"></i></button>
-            </div>
-          </div>
-        </div>
-        <!-- Add more friend cards as needed -->
-        <div class="col-md-4 mb-4" id="friend-2">
-          <div class="card friend-card">
-            <div class="card-body d-flex align-items-center">
-              <img src="https://via.placeholder.com/50" alt="Friend 2" class="modal-img me-3">
-              <div class="flex-grow-1">
-                <h5 class="card-title mb-0">Michael Brown</h5>
-                <small class="text-muted">michael.brown@example.com</small>
-              </div>
-              <button class="btn btn-danger btn-sm remove-friend-btn" data-friend-id="2"><i class="fas fa-trash-alt"></i></button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- No Friends Message -->
-      <div class="text-center" id="noFriendsMessage" style="display: none;">
-        <p>You have no friends added yet. Start adding some!</p>
-      </div>
+  <section class="container my-5" id="friendsListSection">
+    <div class="card-container" id="friendsList">
+      <!-- Friend Cards Injected Here -->
+    </div>
+    <div class="text-center mt-3" id="noFriendsMessage" style="display: none;">
+      <p>You have no friends added yet. Start adding some!</p>
     </div>
   </section>
+
+  <!-- Friend Requests Section -->
+  <section class="container my-5 d-none" id="requestsListSection">
+    <div class="card-container" id="requestsList">
+      <!-- Friend Request Cards Injected Here -->
+    </div>
+    <div class="text-center mt-3" id="noRequestsMessage" style="display: none;">
+      <p>You have no friend requests at the moment.</p>
+    </div>
+  </section>
+
+  <!-- Floating Add Friend Button -->
+  <div class="add-friend-btn" data-bs-toggle="modal" data-bs-target="#addFriendModal" title="Add Friend">
+    <i class="fas fa-user-plus"></i>
+  </div>
 
   <!-- Add Friend Modal -->
   <div class="modal fade" id="addFriendModal" tabindex="-1" aria-labelledby="addFriendModalLabel" aria-hidden="true">
@@ -201,7 +339,7 @@
             <!-- Profile Picture Upload -->
             <div class="mb-3 text-center">
               <img src="https://via.placeholder.com/150" alt="Profile Picture" class="profile-img mb-2" id="editProfileImgPreview">
-              <input type="file" class="form-control" id="editProfileImg" accept="image/*">
+              <input type="file" class="form-control mt-2" id="editProfileImg" accept="image/*">
             </div>
             <!-- Name Input -->
             <div class="mb-3">
@@ -226,7 +364,7 @@
     </div>
   </div>
 
-  <!-- Login Modal (From Previous Code) -->
+  <!-- Login Modal -->
   <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -262,7 +400,7 @@
     </div>
   </div>
 
-  <!-- Signup Modal (From Previous Code) -->
+  <!-- Signup Modal -->
   <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -310,26 +448,70 @@
 
   <!-- Bootstrap JS and dependencies (Popper.js) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Optional: Font Awesome JS for icons -->
+  <!-- Font Awesome JS for icons -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
   <!-- Custom JavaScript -->
   <script>
-    // Sample Friends Data (In a real application, this would come from a backend)
+    // Sample Data for Friend Requests and Friends (Replace with API calls in a real app)
+    let friendRequests = [
+      { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com', img: 'https://via.placeholder.com/150' },
+      { id: 4, name: 'Tom White', email: 'tom.white@example.com', img: 'https://via.placeholder.com/150' },
+      { id: 5, name: 'Emily Davis', email: 'emily.davis@example.com', img: 'https://via.placeholder.com/150' },
+      { id: 6, name: 'Robert Wilson', email: 'robert.wilson@example.com', img: 'https://via.placeholder.com/150' },
+      { id: 7, name: 'Sophia Martinez', email: 'sophia.martinez@example.com', img: 'https://via.placeholder.com/150' },
+      { id: 8, name: 'Daniel Garcia', email: 'daniel.garcia@example.com', img: 'https://via.placeholder.com/150' },
+      { id: 9, name: 'Olivia Lee', email: 'olivia.lee@example.com', img: 'https://via.placeholder.com/150' },
+      { id: 10, name: 'Ethan Kim', email: 'ethan.kim@example.com', img: 'https://via.placeholder.com/150' },
+      // Add more friend requests as needed
+    ];
+
     let friends = [
-      { id: 1, name: 'Jane Smith', email: 'jane.smith@example.com', img: 'https://via.placeholder.com/50' },
-      { id: 2, name: 'Michael Brown', email: 'michael.brown@example.com', img: 'https://via.placeholder.com/50' },
+      { id: 1, name: 'Jane Smith', email: 'jane.smith@example.com', img: 'https://via.placeholder.com/150' },
+      { id: 2, name: 'Michael Brown', email: 'michael.brown@example.com', img: 'https://via.placeholder.com/150' },
       // Add more friends as needed
     ];
 
-    // User Data (In a real application, this would come from a backend)
-    let user = {
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      bio: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      img: 'https://via.placeholder.com/150'
-    };
+    // Update Badges
+    function updateBadges() {
+      document.getElementById('friendsBadge').textContent = friends.length;
+      document.getElementById('requestsBadge').textContent = friendRequests.length;
+    }
 
-    // Function to Render Friends List
+    // Render Friend Requests with Enhanced Card Design
+    function renderFriendRequests() {
+      const requestsList = document.getElementById('requestsList');
+      const noRequestsMessage = document.getElementById('noRequestsMessage');
+      requestsList.innerHTML = '';
+
+      if (friendRequests.length === 0) {
+        noRequestsMessage.style.display = 'block';
+        return;
+      } else {
+        noRequestsMessage.style.display = 'none';
+      }
+
+      friendRequests.forEach(request => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+
+        card.innerHTML = `
+          <img src="${request.img}" alt="${request.name}">
+          <div class="card-body">
+            <h5 class="card-title">${request.name}</h5>
+            <p class="card-text">${request.email}</p>
+            <div class="action-icons">
+              <i class="fas fa-check-circle action-icon text-success accept-request-btn" data-request-id="${request.id}" title="Accept"></i>
+              <i class="fas fa-times-circle action-icon text-danger decline-request-btn" data-request-id="${request.id}" title="Decline"></i>
+            </div>
+          </div>
+        `;
+
+        requestsList.appendChild(card);
+      });
+    }
+
+    // Render Friends List with Enhanced Card Design
     function renderFriends() {
       const friendsList = document.getElementById('friendsList');
       const noFriendsMessage = document.getElementById('noFriendsMessage');
@@ -343,54 +525,146 @@
       }
 
       friends.forEach(friend => {
-        const friendCard = document.createElement('div');
-        friendCard.classList.add('col-md-4', 'mb-4');
-        friendCard.id = `friend-${friend.id}`;
+        const card = document.createElement('div');
+        card.classList.add('card');
 
-        friendCard.innerHTML = `
-          <div class="card friend-card">
-            <div class="card-body d-flex align-items-center">
-              <img src="${friend.img}" alt="${friend.name}" class="modal-img me-3">
-              <div class="flex-grow-1">
-                <h5 class="card-title mb-0">${friend.name}</h5>
-                <small class="text-muted">${friend.email}</small>
-              </div>
-              <button class="btn btn-danger btn-sm remove-friend-btn" data-friend-id="${friend.id}"><i class="fas fa-trash-alt"></i></button>
+        card.innerHTML = `
+          <img src="${friend.img}" alt="${friend.name}">
+          <div class="card-body">
+            <h5 class="card-title">${friend.name}</h5>
+            <p class="card-text">${friend.email}</p>
+            <div class="action-icons">
+              <i class="fas fa-trash-alt action-icon text-danger remove-friend-btn" data-friend-id="${friend.id}" title="Remove Friend"></i>
             </div>
           </div>
         `;
-        friendsList.appendChild(friendCard);
+
+        friendsList.appendChild(card);
       });
     }
 
-    // Function to Remove Friend
-    function removeFriend(id) {
-      const index = friends.findIndex(friend => friend.id === id);
-      if (index !== -1) {
-        friends.splice(index, 1);
-        renderFriends();
-      }
-    }
-
-    // Event Listener for Removing Friends
+    // Handle Accept, Decline, and Remove Actions
     document.addEventListener('click', function(event) {
+      if (event.target.matches('.accept-request-btn') || event.target.closest('.accept-request-btn')) {
+        const requestId = parseInt(event.target.getAttribute('data-request-id'));
+        acceptFriendRequest(requestId);
+      }
+      if (event.target.matches('.decline-request-btn') || event.target.closest('.decline-request-btn')) {
+        const requestId = parseInt(event.target.getAttribute('data-request-id'));
+        declineFriendRequest(requestId);
+      }
       if (event.target.matches('.remove-friend-btn') || event.target.closest('.remove-friend-btn')) {
-        const button = event.target.closest('.remove-friend-btn');
-        const friendId = parseInt(button.getAttribute('data-friend-id'));
-        // Optionally, add a confirmation dialog
-        if (confirm('Are you sure you want to remove this friend?')) {
-          removeFriend(friendId);
-        }
+        const friendId = parseInt(event.target.getAttribute('data-friend-id'));
+        removeFriend(friendId);
       }
     });
 
-    // Function to Update User Profile
-    function updateUserProfile() {
-      document.getElementById('userName').textContent = user.name;
-      document.getElementById('userEmail').textContent = user.email;
-      document.getElementById('userBio').textContent = user.bio;
-      document.getElementById('userProfileImg').src = user.img;
-      document.getElementById('editProfileImgPreview').src = user.img;
+    // Accept Friend Request
+    function acceptFriendRequest(id) {
+      const index = friendRequests.findIndex(request => request.id === id);
+      if (index !== -1) {
+        const acceptedFriend = friendRequests.splice(index, 1)[0];
+        friends.push(acceptedFriend);
+        renderFriends();
+        renderFriendRequests();
+        updateBadges();
+        showToast(`You have accepted ${acceptedFriend.name} as a friend.`, 'bg-success');
+      }
+    }
+
+    // Decline Friend Request
+    function declineFriendRequest(id) {
+      const index = friendRequests.findIndex(request => request.id === id);
+      if (index !== -1) {
+        const declinedFriend = friendRequests.splice(index, 1)[0];
+        renderFriendRequests();
+        updateBadges();
+        showToast(`You have declined ${declinedFriend.name}'s friend request.`, 'bg-danger');
+      }
+    }
+
+    // Remove Friend
+    function removeFriend(id) {
+      const index = friends.findIndex(friend => friend.id === id);
+      if (index !== -1) {
+        const removedFriend = friends.splice(index, 1)[0];
+        renderFriends();
+        updateBadges();
+        showToast(`You have removed ${removedFriend.name} from your friends.`, 'bg-danger');
+      }
+    }
+
+    // Search Functionality
+    document.getElementById('searchInput').addEventListener('input', function() {
+      const query = this.value.toLowerCase();
+      filterCards(query);
+    });
+
+    function filterCards(query) {
+      const friendsList = document.getElementById('friendsList');
+      const requestsList = document.getElementById('requestsList');
+
+      // Filter Friends
+      Array.from(friendsList.children).forEach(card => {
+        const name = card.querySelector('.card-title').textContent.toLowerCase();
+        const email = card.querySelector('.card-text').textContent.toLowerCase();
+        if (name.includes(query) || email.includes(query)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Filter Requests
+      Array.from(requestsList.children).forEach(card => {
+        const name = card.querySelector('.card-title').textContent.toLowerCase();
+        const email = card.querySelector('.card-text').textContent.toLowerCase();
+        if (name.includes(query) || email.includes(query)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Toggle Between Friends and Requests
+    document.getElementById('friendsBtn').addEventListener('click', () => {
+      document.getElementById('friendsListSection').classList.remove('d-none');
+      document.getElementById('requestsListSection').classList.add('d-none');
+      document.getElementById('friendsBtn').classList.add('active');
+      document.getElementById('requestsBtn').classList.remove('active');
+    });
+
+    document.getElementById('requestsBtn').addEventListener('click', () => {
+      document.getElementById('friendsListSection').classList.add('d-none');
+      document.getElementById('requestsListSection').classList.remove('d-none');
+      document.getElementById('friendsBtn').classList.remove('active');
+      document.getElementById('requestsBtn').classList.add('active');
+    });
+
+    // Function to Show Toast Notifications
+    function showToast(message, bgColor) {
+      const toastContainer = document.createElement('div');
+      toastContainer.className = `toast align-items-center text-white ${bgColor} border-0`;
+      toastContainer.setAttribute('role', 'alert');
+      toastContainer.setAttribute('aria-live', 'assertive');
+      toastContainer.setAttribute('aria-atomic', 'true');
+      toastContainer.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">
+            ${message}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+      document.body.appendChild(toastContainer);
+
+      const toast = new bootstrap.Toast(toastContainer, { delay: 3000 });
+      toast.show();
+
+      toastContainer.addEventListener('hidden.bs.toast', () => {
+        toastContainer.remove();
+      });
     }
 
     // Event Listener for Adding Friends
@@ -404,24 +678,26 @@
         return;
       }
 
-      // In a real application, you would send this data to the backend to add the friend.
-      // For this example, we'll simulate adding a friend with a placeholder name and image.
-
-      const newFriendId = friends.length > 0 ? friends[friends.length - 1].id + 1 : 1;
-      const newFriend = {
-        id: newFriendId,
+      // Simulate adding a friend by sending a friend request
+      // In a real application, you would send this data to the backend to process
+      const newRequestId = friendRequests.length > 0 ? Math.max(...friendRequests.map(r => r.id)) + 1 : 3;
+      const newFriendRequest = {
+        id: newRequestId,
         name: 'New Friend',
         email: friendEmail,
-        img: 'https://via.placeholder.com/50'
+        img: 'https://via.placeholder.com/150'
       };
 
-      friends.push(newFriend);
-      renderFriends();
+      friendRequests.push(newFriendRequest);
+      renderFriendRequests();
+      updateBadges();
 
       // Reset the form and close the modal
       friendEmailInput.value = '';
       const addFriendModal = bootstrap.Modal.getInstance(document.getElementById('addFriendModal'));
       addFriendModal.hide();
+
+      showToast(`Friend request sent to ${newFriendRequest.name}.`, 'bg-primary');
     });
 
     // Event Listener for Editing Profile Picture Preview
@@ -449,30 +725,31 @@
         return;
       }
 
-      // Update user data
-      user.name = editName;
-      user.email = editEmail;
-      user.bio = editBio;
+      // Update user data (for demonstration purposes, update the DOM directly)
+      document.getElementById('userName').textContent = editName;
+      document.getElementById('userEmail').textContent = editEmail;
+      document.getElementById('userBio').textContent = editBio;
 
       if (editProfileImg) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          user.img = e.target.result;
-          updateUserProfile();
+          document.querySelector('.profile-img').src = e.target.result;
+          document.getElementById('editProfileImgPreview').src = e.target.result;
         }
         reader.readAsDataURL(editProfileImg);
-      } else {
-        updateUserProfile();
       }
 
       // Close the modal
       const editProfileModal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
       editProfileModal.hide();
+
+      showToast(`Profile updated successfully.`, 'bg-success');
     });
 
     // Initial Render
     renderFriends();
-    updateUserProfile();
+    renderFriendRequests();
+    updateBadges();
   </script>
 </body>
 </html>

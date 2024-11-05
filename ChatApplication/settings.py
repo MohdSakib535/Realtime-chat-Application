@@ -45,6 +45,9 @@ INSTALLED_APPS = [
     'useraccount',
     'globalchat',
     'privatechat',
+    'Notification',
+    'friends',
+    'rest_framework',
 ]
 
 
@@ -100,6 +103,15 @@ CHANNEL_LAYERS = {
     },
 }
 
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -145,3 +157,5 @@ STATICFILES_DIRS=[STATIC_DIR,]
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+BASE_URL = "http://127.0.0.1:8000"

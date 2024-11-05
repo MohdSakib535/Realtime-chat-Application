@@ -15,9 +15,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path,include
+from rest_framework import routers
 from useraccount import views as uv
 from globalchat import views as GC
+from privatechat import views as PV
+from friends import views as F
+
+router = routers.DefaultRouter()
+router.register(r'user-data', uv.UserAccountView)
+router.register('friend-list',F.Friend_List)
+router.register('friend-request-list',F.Friend_request_List)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,5 +41,15 @@ urlpatterns = [
 
     path("pu",GC.Public_chat,name='public_url'),
     path('chat/<str:room_name>/', GC.chat_room, name='chat_room'),
+
+    path('explore',PV.Explore_people,name='explore_people'),
+
+
+
+
+    # API 
+    path('api/', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls')),
+
 
 ]
