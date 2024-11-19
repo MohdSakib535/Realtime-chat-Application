@@ -5,15 +5,15 @@ from django.conf import settings
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+# from Notification.utils import send_notification_to_user
 
 # from chat.utils import find_or_create_private_chatf
 from Notification.models import Notification
 
 
 class FriendList(models.Model):
-
-	user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user")
-	friends = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name="friends") 
+	user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="friend_list")
+	friends = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name="friends_set") 
 
 	# set up the reverse relation to GenericForeignKey
 	notifications= GenericRelation(Notification)
@@ -21,88 +21,7 @@ class FriendList(models.Model):
 	def __str__(self):
 		return self.user.username
 
-	def add_friend(self, account):
-		"""
-		Add a new friend.
-		"""
-		if not account in self.friends.all():
-			self.friends.add(account)
-			self.save()
-
-			content_type = ContentType.objects.get_for_model(self)
-
-			# Create notification
-			# Can create this way if you want. Doesn't matter.
-			# Notification(
-			# 	target=self.user,
-			# 	from_user=account,
-			# 	redirect_url=f"{settings.BASE_URL}/account/{account.pk}/",
-			# 	verb=f"You are now friends with {account.username}.",
-			# 	content_type=content_type,
-			# 	object_id=self.id,
-			# ).save()
-
-			self.notifications.create(
-				target=self.user,
-				from_user=account,
-				redirect_url=f"{settings.BASE_URL}/account/{account.pk}/",
-				verb=f"You are now friends with {account.username}.",
-				content_type=content_type,
-			)
-			self.save()
-
-			# Create a private chat (or activate an old one)
-			chat = find_or_create_private_chat(self.user, account)
-			if not chat.is_active:
-				chat.is_active = True
-				chat.save()
-
-	def remove_friend(self, account):
-		"""
-		Remove a friend.
-		"""
-		if account in self.friends.all():
-			self.friends.remove(account)
-
-			# Deactivate the private chat between these two users
-			chat = find_or_create_private_chat(self.user, account)
-			if chat.is_active:
-				chat.is_active = False
-				chat.save()
-
-	def unfriend(self, removee):
-		"""
-		Initiate the action of unfriending someone.
-		"""
-		remover_friends_list = self # person terminating the friendship
-
-		# Remove friend from remover friend list
-		remover_friends_list.remove_friend(removee)
-
-		# Remove friend from removee friend list
-		friends_list = FriendList.objects.get(user=removee)
-		friends_list.remove_friend(remover_friends_list.user)
-
-		content_type = ContentType.objects.get_for_model(self)
-
-		# Create notification for removee
-		friends_list.notifications.create(
-			target=removee,
-			from_user=self.user,
-			redirect_url=f"{settings.BASE_URL}/account/{self.user.pk}/",
-			verb=f"You are no longer friends with {self.user.username}.",
-			content_type=content_type,
-		)
-
-		# Create notification for remover
-		self.notifications.create(
-			target=self.user,
-			from_user=removee,
-			redirect_url=f"{settings.BASE_URL}/account/{removee.pk}/",
-			verb=f"You are no longer friends with {removee.username}.",
-			content_type=content_type,
-		)
-
+	
 	@property
 	def get_cname(self):
 		"""
@@ -241,13 +160,17 @@ class FriendRequest(models.Model):
 		return "FriendRequest"
 
 
+
 @receiver(post_save, sender=FriendRequest)
 def create_notification(sender, instance, created, **kwargs):
 	if created:
-		instance.notifications.create(
-			target=instance.receiver,
-			from_user=instance.sender,
-			redirect_url=f"{settings.BASE_URL}/account/{instance.sender.pk}/",
-			verb=f"{instance.sender.username} sent you a friend request.",
-			content_type=instance,
-		)
+		content_type = ContentType.objects.get_for_model(instance)
+		notification = Notification.objects.create(
+            target=instance.receiver,
+            from_user=instance.sender,
+            redirect_url=f"{settings.BASE_URL}/account/{instance.sender.pk}/",
+            verb=f"{instance.sender.username} sent you a friend request.",
+            content_type=content_type,
+			object_id=instance.id
+        )
+		# send_notification_to_user(instance.receiver.id, notification.verb)

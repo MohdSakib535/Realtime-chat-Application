@@ -94,6 +94,47 @@
     .modal-footer {
       border-top: none;
     }
+
+     /* notification Custom Styles */
+    .notification-icon {
+      position: relative;
+      font-size: 1.5rem;
+      color: #0d6efd;
+      cursor: pointer;
+    }
+    .notification-icon .badge {
+      position: absolute;
+      top: -5px;
+      right: -10px;
+      background-color: #dc3545;
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 3px 6px;
+      border-radius: 50%;
+    }
+    .dropdown-notifications {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      width: 300px;
+      max-height: 300px;
+      overflow-y: auto;
+      background-color: #ffffff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      display: none; /* Hidden by default */
+      z-index: 1000;
+    }
+    .dropdown-notifications .notification-item {
+      padding: 10px 15px;
+      border-bottom: 1px solid #f1f1f1;
+    }
+    .dropdown-notifications .notification-item:last-child {
+      border-bottom: none;
+    }
+    .dropdown-notifications .notification-item:hover {
+      background-color: #f8f9fa;
+    }
   </style>
 </head>
 <body>
@@ -115,14 +156,38 @@
               <a class="nav-link" href="#">Features</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Pricing</a>
+              <a class="nav-link" href="{% url 'new_exlpore' %}">Explore</a>
             </li>
+            
             {% if user.is_authenticated %}
+
+
+
+              <!-- Notification Icon with Dropdown -->
+              <div class="position-relative m-3">
+                <a href="#" class="notification-icon" id="notificationBell">
+                  <i class="fas fa-bell"></i>
+                  <span class="badge" id="notificationCount">0</span>
+                </a>
+                <!-- Enhanced Notification Dropdown -->
+                <div class="dropdown-notifications" id="notificationDropdown">
+                  <p class="text-center text-muted my-2" id="noNotifications">No new notifications</p>
+                  <ul id="notificationList" class="list-unstyled mb-0"></ul>
+                </div>
+              </div>
+            
+
+
               <!-- User Profile Dropdown -->
               <li class="nav-item dropdown profile-dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="fas fa-user-circle fa-lg"></i>
                 </a>
+
+                
+
+
+
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                   <li><a class="dropdown-item" href="{% url 'user_profile' %}">Profilee</a></li>
                   <li><a class="dropdown-item" href="#">Settings</a></li>
@@ -159,7 +224,7 @@
       {% if not request.user.is_authenticated %}
       <a href="#" class="btn btn-primary btn-lg hover-signup" data-bs-toggle="modal" data-bs-target="#signupModal">Sign Up Now</a>
       {% else %}
-      <a href="#" class="btn btn-primary btn-lg hover-signup"  >Dashboard</a>
+      <a href="#" class="btn btn-primary btn-lg hover-signup">Dashboard</a>
 
       {% endif %}
     </div>
@@ -181,7 +246,7 @@
         </div>
         <!-- Feature 2: Personal Rooms -->
         <div class="col-md-4 mb-4">
-          <a href="{% url 'private_url' %}" class="text-decoration-none text-reset">
+          <a href="{% url 'private_chat_room' %}" class="text-decoration-none text-reset">
             <div class="p-4 border rounded hover-shadow">
               <i class="fas fa-user feature-icon"></i>
               <h3>Personal Rooms</h3>
@@ -339,6 +404,43 @@
     </div>
   </div>
 
+   <!-- Notification Modal -->
+   <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="notificationModalLabel">Notifications</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="list-group" id="notificationList">
+            <!-- Placeholder Notification Items -->
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              New friend request from John
+              <div>
+                <button class="btn btn-sm btn-success me-2">Accept</button>
+                <button class="btn btn-sm btn-danger">Decline</button>
+              </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Your request to Alex was accepted
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              New friend request from Sarah
+              <div>
+                <button class="btn btn-sm btn-success me-2">Accept</button>
+                <button class="btn btn-sm btn-danger">Decline</button>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap JS and dependencies (Popper.js) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Optional: Font Awesome JS for icons -->
@@ -349,5 +451,117 @@
     // Handle Feature Box Clicks (Optional if you want additional functionality)
     // Example: You can load dynamic content based on the feature clicked
   </script>
+
+
+
+<!-- notification -->
+  <script>
+     // Elements
+     const notificationBell = document.getElementById('notificationBell');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    const notificationList = document.getElementById('notificationList');
+    const notificationCount = document.getElementById('notificationCount');
+    const noNotificationsText = document.getElementById('noNotifications');
+
+    // Toggle notification dropdown
+    notificationBell.addEventListener('click', () => {
+      notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Close dropdown if clicked outside
+    document.addEventListener('click', (e) => {
+      if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+        notificationDropdown.style.display = 'none';
+      }
+    });
+
+    // WebSocket connection for notifications
+    const wsUrl = `ws://${window.location.host}/ws/notifications/`;
+    const notificationSocket = new WebSocket(wsUrl);
+
+    // Handle incoming messages
+    notificationSocket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      const notification = data.notification;
+
+      // Hide "No new notifications" text
+      noNotificationsText.style.display = 'none';
+
+      // Update the notification count
+      let count = parseInt(notificationCount.textContent) || 0;
+      count += 1;
+      notificationCount.textContent = count;
+      notificationCount.style.display = 'inline';
+
+      // Add the notification to the list
+      const notificationItem = document.createElement('li');
+      notificationItem.classList.add('notification-item');
+      notificationItem.textContent = notification;
+      notificationList.prepend(notificationItem);
+    };
+
+    // Handle WebSocket closure
+    notificationSocket.onclose = function(event) {
+      console.error('Notification WebSocket closed unexpectedly');
+    };
+    
+  </script>
+
+ <!-- <script>
+
+const notificationBell = document.getElementById('notificationBell');
+  const notificationDropdown = document.getElementById('notificationDropdown');
+  const notificationList = document.getElementById('notificationList');
+  const notificationCount = document.getElementById('notificationCount');
+  const noNotificationsText = document.getElementById('noNotifications');
+
+  // Toggle notification dropdown
+  notificationBell.addEventListener('click', () => {
+    notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // Close dropdown if clicked outside
+  document.addEventListener('click', (e) => {
+    if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+      notificationDropdown.style.display = 'none';
+    }
+  });
+
+  // Array of sample usernames for random notifications
+  const usernames = ["John", "Jane", "Alex", "Maria", "Chris", "Sophia", "David", "Emma", "Lucas", "Olivia"];
+
+  // Function to create random friend-related notifications
+  function addRandomNotification() {
+    const randomUser = usernames[Math.floor(Math.random() * usernames.length)];
+    const notificationType = Math.random() > 0.5 ? "friend request" : "acceptance";
+
+    const notificationMessage =
+      notificationType === "friend request"
+        ? `New friend request from ${randomUser}`
+        : `${randomUser} accepted your friend request`;
+
+    // Hide "No new notifications" text
+    noNotificationsText.style.display = 'none';
+
+    // Update the notification count
+    let count = parseInt(notificationCount.textContent) || 0;
+    // count += 1;
+    notificationCount.textContent = count;
+    notificationCount.style.display = 'inline';
+
+    // Add the notification to the list
+    const notificationItem = document.createElement('li');
+    notificationItem.classList.add('notification-item');
+    notificationItem.textContent = notificationMessage;
+    notificationList.prepend(notificationItem);
+  }
+
+  // Simulate receiving a new notification every few seconds
+  setInterval(addRandomNotification, 5000); // Adjust interval as needed (5000ms = 5 seconds)
+ </script> -->
+
+
+
+
 </body>
 </html>

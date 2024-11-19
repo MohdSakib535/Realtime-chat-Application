@@ -2,23 +2,25 @@ from django.contrib import admin
 
 from friends.models import FriendList, FriendRequest
 
-
 class FriendListAdmin(admin.ModelAdmin):
-    list_filter = ['user']
-    list_display = ['user']
-    search_fields = ['user']
-    # readonly_fields = ['user',]
+    # Display fields in the admin list view
+    list_display = ('id', 'user', 'get_friends', 'get_notifications')
 
-    class Meta:
-        model = FriendList
+    def get_friends(self, obj):
+        return ", ".join([friend.username for friend in obj.friends.all()])
+    get_friends.short_description = "Friends"
 
+    def get_notifications(self, obj):
+        return ", ".join([str(notification) for notification in obj.notifications.all()])
+    get_notifications.short_description = "Notifications"
 
+# Register the model
 admin.site.register(FriendList, FriendListAdmin)
 
 
 class FriendRequestAdmin(admin.ModelAdmin):
     list_filter = ['sender', 'receiver']
-    list_display = ['sender', 'receiver']
+    list_display = ['sender', 'receiver','is_active']
     search_fields = ['sender__username', 'receiver__username']
     # readonly_fields = ['id',]
 

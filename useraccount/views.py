@@ -7,14 +7,14 @@ from useraccount.serializers import user_account_Serializers
 # Create your views here.
 
 
+
 def home(request):
     return render(request,'home.html')
 
 def Public_chat(request):
     return render(request,'public_chat.html')
 
-def Private_chat(request):
-    return render(request,'private_chats.html')
+
 
 def Requested_list(request):
     return render(request,'requested_list.html')

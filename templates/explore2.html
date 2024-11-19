@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explore People - ChatApps</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom CSS -->
+  <style>
+    /* General Styles */
+    body {
+      padding-top: 70px; /* To prevent content from hiding behind fixed navbar */
+      background-color: #f4f7fb;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Sticky Header for Search and Tabs */
+    .sticky-header {
+      position: sticky;
+      top: 70px; /* Height of the navbar */
+      background: #fff;
+      z-index: 1000;
+      padding: 10px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    /* Search Input Styling */
+    .search-container {
+      max-width: 400px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .search-container input {
+      width: 100%;
+      padding: 10px 40px 10px 15px;
+      border-radius: 20px;
+      border: 1px solid #ced4da;
+      transition: border-color 0.3s;
+    }
+
+    .search-container input:focus {
+      border-color: #0d6efd;
+      outline: none;
+    }
+
+    .search-container .search-icon {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+
+    /* Enhanced User Card Styling */
+    .user-card {
+      background-color: #fff;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+      padding: 15px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      height: 100%; /* Ensures uniform height */
+    }
+
+    .user-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-card img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid #0d6efd;
+    }
+
+    .user-info h5.card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .user-info p.card-text {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 10px;
+    }
+
+    .action-buttons {
+      /* Ensure buttons don't overflow */
+      flex-shrink: 0;
+    }
+
+    /* Loader Styling */
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0d6efd;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Infinite Scroll Loader */
+    .infinite-loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 0;
+    }
+
+    /* Notification Icon Styling */
+    .notification-icon {
+      position: relative;
+      font-size: 1.5rem;
+      color: #0d6efd;
+      cursor: pointer;
+    }
+
+    .notification-icon .badge {
+      position: absolute;
+      top: -5px;
+      right: -10px;
+      background-color: #dc3545;
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 3px 6px;
+      border-radius: 50%;
+    }
+
+    /* Notification Dropdown Styling */
+    .dropdown-notifications {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      width: 300px;
+      max-height: 400px;
+      overflow-y: auto;
+      background-color: #ffffff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      display: none; /* Hidden by default */
+      z-index: 1000;
+    }
+
+    .dropdown-notifications .notification-item {
+      padding: 10px 15px;
+      border-bottom: 1px solid #f1f1f1;
+      cursor: pointer;
+    }
+
+    .dropdown-notifications .notification-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-notifications .notification-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 576px) {
+      .search-container {
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="#">ChatApp</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav align-items-center">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Features</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'new_exlpore' %}">Explore</a>
+          </li>
+
+          {% if user.is_authenticated %}
+            <!-- Notification Icon with Dropdown -->
+            <li class="nav-item position-relative">
+              <a href="#" class="nav-link notification-icon" id="notificationBell">
+                <i class="fas fa-bell"></i>
+                <span class="badge" id="notificationCount">{{ notification_count }}</span>
+              </a>
+              <!-- Notification Dropdown -->
+              <div class="dropdown-notifications" id="notificationDropdown">
+                <p class="text-center text-muted my-2" id="noNotifications">No new notifications</p>
+                <ul id="notificationList" class="list-unstyled mb-0">
+                  {% for notification in notification_data %}
+                    <li class="notification-item">
+                      {{ notification.verb }}
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </li>
+
+            <!-- User Profile Dropdown -->
+            <li class="nav-item dropdown ms-3">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-user-circle fa-lg"></i>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><a class="dropdown-item" href="{% url 'user_profile' %}">Profile</a></li>
+                <li><a class="dropdown-item" href="#">Settings</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="POST" action="+">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item">Logout</button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          {% else %}
+            <!-- Login and Signup Buttons -->
+            <li class="nav-item">
+              <a class="nav-link btn btn-outline-primary hover-login me-2" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link btn btn-primary hover-signup" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Signup</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Explore Section -->
+  <section class="container my-5">
+    <h2 class="text-center mb-4">Explore New People</h2>
+
+    <!-- Sticky Header for Search and Tabs -->
+    <div class="sticky-header">
+      <!-- Search Input -->
+      <div class="search-container mb-3">
+        <input type="text" id="searchInput" placeholder="Search for people...">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <ul class="nav nav-tabs justify-content-center mb-3" id="exploreTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="friends-tab" data-bs-toggle="tab" data-bs-target="#friends" type="button" role="tab" aria-controls="friends" aria-selected="true">
+            <i class="fas fa-users me-1"></i>Friends
+            <span class="badge bg-primary rounded-pill ms-1" id="friendsBadge">{{ friends_count }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="false">
+            <i class="fas fa-user-plus me-1"></i>Requests
+            <span class="badge bg-danger rounded-pill ms-1" id="requestsBadge">{{ requests_count }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="explore-tab" data-bs-toggle="tab" data-bs-target="#explore" type="button" role="tab" aria-controls="explore" aria-selected="false">
+            <i class="fas fa-compass me-1"></i>Explore
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Tab Content Panes -->
+    <div class="tab-content" id="exploreTabsContent">
+      
+      <!-- Friends Tab Pane -->
+      <div class="tab-pane fade show active" id="friends" role="tabpanel" aria-labelledby="friends-tab">
+        <div class="row mt-4" id="friendsList">
+          <!-- Friend User Cards will be injected here -->
+          <!-- Example Friend Card -->
+
+          {% if friends %}
+            {% for friend in friends %}
+              <div class="col-md-4 mb-4">
+                <div class="user-card d-flex flex-column">
+                  <div class="d-flex align-items-center">
+                    <img src="{{ friend.profile_image.url }}" alt="{{ friend.username }}">
+                    <div class="user-info ms-3">
+                      <h5 class="card-title mb-0">{{ friend.username }}</h5>
+                      <p class="card-text mb-0">{{ friend.email }}</p>
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <button class="btn btn-secondary btn-sm" disabled>
+                      <i class="fas fa-user-check me-1"></i>Friend
+                    </button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center mt-3" id="friendsNoResultsMessage">
+              <p>You have no friends yet.</p>
+            </div>
+          {% endif %}
+        </div>
+        <!-- Infinite Scroll Loader -->
+        <div id="friendsInfiniteLoader" class="infinite-loader d-none">
+          <div class="loader"></div>
+        </div>
+      </div>
+      
+      <!-- Requests Tab Pane -->
+      <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+        <div class="row mt-4" id="requestsList">
+          <!-- Friend Request User Cards will be injected here -->
+          <!-- Example Request Card -->
+          {% for request in request_data %}
+            <div class="col-md-4 mb-4">
+              <div class="user-card d-flex flex-column">
+                <div class="d-flex align-items-center">
+                  <img src="{{ request.sender.profile_image.url }}" alt="{{ request.sender.username }}">
+                  <div class="user-info ms-3">
+                    <h5 class="card-title mb-0">{{ request.sender.username }}</h5>
+                    <p class="card-text mb-0">{{ request.sender.email }}</p>
+                  </div>
+                </div>
+                <div class="mt-3 action-buttons d-flex justify-content-between">
+                  <button class="btn btn-success btn-sm accept-btn" data-user-id="{{ request.sender.id }}">
+                    <i class="fas fa-check me-1"></i>Accept
+                  </button>
+                  <button class="btn btn-danger btn-sm decline-btn" data-user-id="{{ request.sender.id }}">
+                    <i class="fas fa-times me-1"></i>Decline
+                  </button>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="text-center mt-3" id="requestsNoResultsMessage">
+              <p>No incoming friend requests.</p>
+            </div>
+          {% endfor %}
+        </div>
+        <!-- Infinite Scroll Loader -->
+        <div id="requestsInfiniteLoader" class="infinite-loader d-none">
+          <div class="loader"></div>
+        </div>
+      </div>
+      
+      <!-- Explore Tab Pane -->
+      <div class="tab-pane fade" id="explore" role="tabpanel" aria-labelledby="explore-tab">
+        <div class="row mt-4" id="exploreList">
+          <!-- Explore User Cards will be injected here -->
+          <!-- Example Explore Card -->
+          {% for user in all_user %}
+            <div class="col-md-4 mb-4">
+              <div class="user-card d-flex flex-column">
+                <div class="d-flex align-items-center">
+                  <img src="{{ user.profile_image.url }}" alt="{{ user.username }}">
+                  <div class="user-info ms-3">
+                    <h5 class="card-title mb-0">{{ user.username }}</h5>
+                    <p class="card-text mb-0">{{ user.email }}</p>
+                  </div>
+                </div>
+                <div class="mt-3 action-buttons">
+                  <button class="btn btn-primary btn-sm add-btn" data-user-id="{{ user.id }}">
+                    <i class="fas fa-user-plus me-1"></i>Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="text-center mt-3" id="exploreNoResultsMessage">
+              <p>No users found.</p>
+            </div>
+          {% endfor %}
+        </div>
+        <!-- Infinite Scroll Loader -->
+        <div id="exploreInfiniteLoader" class="infinite-loader d-none">
+          <div class="loader"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Toast Notification Container -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    <div id="liveToast" class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body" id="toastMessage">
+          <!-- Message will be inserted here -->
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="loginModalLabel">Login</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Login Form -->
+          <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="loginEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="loginEmail" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="loginPassword" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup Modal -->
+  <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="signupModalLabel">Signup</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Signup Form -->
+          <form method="POST" action="">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="signupUsername" class="form-label">Username</label>
+              <input type="text" class="form-control" id="signupUsername" name="username" required>
+            </div>
+            <div class="mb-3">
+              <label for="signupEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="signupEmail" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="signupPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="signupPassword" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Signup</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies (Popper.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Font Awesome JS for Icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  
+  <!-- Axios for AJAX Requests -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  
+  <!-- Custom JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeFriendRequestSocket();
+      initializeNotificationSocket();
+      setupAddFriendButtons();
+      setupNotificationBell();
+      setupFriendRequestActionButtons();
+    });
+
+
+    document.getElementById("friends-tab").addEventListener('click',()=>{
+      location.reload()
+    })
+
+    // Reconnection Parameters
+    const RECONNECT_INTERVALS = [1000, 2000, 5000, 10000]; // in milliseconds
+
+    // Function to Initialize Friend Request WebSocket with Reconnection Logic
+    function initializeFriendRequestSocket() {
+      let attempts = 0;
+      const maxAttempts = RECONNECT_INTERVALS.length;
+
+      function connect() {
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const socket = new WebSocket(`${protocol}${window.location.host}/ws/friend-requests/`);
+        console.log("url dta-------",socket);
+        
+
+        socket.onopen = () => {
+          console.log('FriendRequest WebSocket connection established.');
+          attempts = 0; // Reset attempts on successful connection
+        };
+
+        socket.onmessage = (e) => {
+          const data = JSON.parse(e.data);
+          console.log("FriendRequest WebSocket received data:", data);
+
+          if (data.type === 'friend_request') {
+            addFriendRequestToList(data.sender, data.receiver);
+            showToast(data.message, 'bg-info');
+          } else if (data.type === 'error') {
+            showToast(data.message, 'bg-danger');
+          }
+        };
+
+        socket.onclose = (e) => {
+          console.log('FriendRequest WebSocket connection closed.', e.reason);
+          if (attempts < maxAttempts) {
+            const timeout = RECONNECT_INTERVALS[attempts];
+            console.log(`Reconnecting FriendRequest WebSocket in ${timeout / 1000} seconds...`);
+            setTimeout(connect, timeout);
+            attempts++;
+          } else {
+            console.error('Max reconnection attempts reached for FriendRequest WebSocket.');
+          }
+        };
+
+        socket.onerror = (err) => {
+          console.error('FriendRequest WebSocket error:', err);
+          socket.close();
+        };
+
+        // Assign to a global variable if needed
+        window.friendRequestSocket = socket;
+      }
+
+      connect();
+    }
+
+    // Function to Initialize Notification WebSocket with Reconnection Logic
+    function initializeNotificationSocket() {
+      let attempts = 0;
+      const maxAttempts = RECONNECT_INTERVALS.length;
+
+      function connect() {
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const socket = new WebSocket(`${protocol}${window.location.host}/ws/notifications/`);
+
+        socket.onopen = () => {
+          console.log('Notification WebSocket connection established.');
+          attempts = 0; // Reset attempts on successful connection
+        };
+
+        socket.onmessage = (e) => {
+          const data = JSON.parse(e.data);
+          console.log("Notification WebSocket received data:", data);
+
+          if (data.type === 'notification') {
+            handleIncomingNotification(data.notification, data.count);
+            showToast(data.notification, 'bg-primary');
+
+            // Update notification count if 'count' is provided
+            if (data.count !== undefined) {
+              updateNotificationCount(data.count);
+            }
+          }
+        };
+
+        socket.onclose = (e) => {
+          console.log('Notification WebSocket connection closed.', e.reason);
+          if (attempts < maxAttempts) {
+            const timeout = RECONNECT_INTERVALS[attempts];
+            console.log(`Reconnecting Notification WebSocket in ${timeout / 1000} seconds...`);
+            setTimeout(connect, timeout);
+            attempts++;
+          } else {
+            console.error('Max reconnection attempts reached for Notification WebSocket.');
+          }
+        };
+
+        socket.onerror = (err) => {
+          console.error('Notification WebSocket error:', err);
+          socket.close();
+        };
+
+        // Assign to a global variable if needed
+        window.notificationSocket = socket;
+      }
+
+      connect();
+    }
+
+    // Function to Set Up Add Friend Buttons
+    function setupAddFriendButtons() {
+      document.querySelectorAll('.add-btn').forEach(button => {
+        button.addEventListener('click', function () {
+          const targetUserId = this.getAttribute('data-user-id');
+          const userName = this.closest('.user-card').querySelector('.card-title').textContent;
+
+          // Send the friend request via FriendRequest WebSocket
+          if (window.friendRequestSocket && window.friendRequestSocket.readyState === WebSocket.OPEN) {
+            window.friendRequestSocket.send(JSON.stringify({
+              'type': 'send_request',
+              'target_user_id': parseInt(targetUserId)
+            }));
+            console.log(`Sent friend request to user ID: ${targetUserId}`);
+          } else {
+            showToast('Unable to send friend request. Please try again later.', 'bg-danger');
+            return;
+          }
+
+          // Optimistic UI Update
+          this.classList.remove('btn-primary', 'add-btn');
+          this.classList.add('btn-secondary', 'requested');
+          this.disabled = true;
+          this.innerHTML = `<i class="fas fa-user-check me-1"></i>Friend`;
+
+          // Show Toast Notification
+          showToast(`Friend request sent to ${userName}.`, 'bg-primary');
+        });
+      });
+    }
+
+    // Function to Handle Incoming Notifications
+    function handleIncomingNotification(notification, count) {
+      const notificationList = document.getElementById('notificationList');
+      const noNotificationsText = document.getElementById('noNotifications');
+
+      // Hide "No new notifications" text
+      noNotificationsText.style.display = 'none';
+
+      // Add the notification to the top of the list
+      const notificationItem = document.createElement('li');
+      notificationItem.classList.add('notification-item');
+      notificationItem.textContent = notification;
+      notificationList.prepend(notificationItem);
+    }
+
+    // Function to Update Notification Count
+    function updateNotificationCount(count) {
+      const notificationCount = document.getElementById('notificationCount');
+      notificationCount.textContent = count;
+      notificationCount.style.display = count > 0 ? 'inline' : 'none';
+    }
+
+    // Function to Set Up Notification Bell Event Listeners
+    function setupNotificationBell() {
+      const notificationBell = document.getElementById('notificationBell');
+      const notificationDropdown = document.getElementById('notificationDropdown');
+      const notificationList = document.getElementById('notificationList');
+      const notificationCount = document.getElementById('notificationCount');
+      const noNotificationsText = document.getElementById('noNotifications');
+
+      // Toggle notification dropdown
+      notificationBell.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // Prevent the event from bubbling up to the document
+
+        if (notificationDropdown.style.display === 'block') {
+          notificationDropdown.style.display = 'none';
+        } else {
+          notificationDropdown.style.display = 'block';
+          // Reset notification count when dropdown is opened
+          updateNotificationCount(0);
+          // Optionally, mark notifications as read in the backend
+          markNotificationsAsRead();
+        }
+      });
+
+      // Close dropdown if clicked outside
+      document.addEventListener('click', (e) => {
+        if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+          notificationDropdown.style.display = 'none';
+        }
+      });
+    }
+
+    // Function to Mark Notifications as Read
+    function markNotificationsAsRead() {
+      axios.post("http://127.0.0.1:8000/api/read/data/", {}, {
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'
+        }
+      })
+      .then(response => {
+        console.log('Notifications marked as read.');
+        // Optionally, perform additional UI updates
+      })
+      .catch(error => {
+        console.error('Error marking notifications as read:', error);
+      });
+    }
+
+
+
+    // Function to Add Friend Request to Requests List
+    function addFriendRequestToList(sender, receiver) {
+      const requestsList = document.getElementById('requestsList'); // Container for friend requests
+
+      // Create the main container for the request card
+      const colDiv = document.createElement('div');
+      colDiv.className = 'col-md-4 mb-4';
+
+      // Create the user card container
+      const userCardDiv = document.createElement('div');
+      userCardDiv.className = 'user-card d-flex flex-column';
+
+      // Create the user details section
+      const userDetailsDiv = document.createElement('div');
+      userDetailsDiv.className = 'd-flex align-items-center';
+
+      // User profile picture
+      const userImg = document.createElement('img');
+      userImg.src = sender.profile_picture || 'https://via.placeholder.com/60';
+      userImg.alt = sender.username;
+      userImg.className = 'user-img';
+
+      // User information container
+      const userInfoDiv = document.createElement('div');
+      userInfoDiv.className = 'user-info ms-3';
+
+      const userName = document.createElement('h5');
+      userName.className = 'card-title mb-0';
+      userName.textContent = sender.username;
+
+      const userEmail = document.createElement('p');
+      userEmail.className = 'card-text mb-0';
+      userEmail.textContent = sender.email;
+
+      // Append user details to the user info section
+      userInfoDiv.appendChild(userName);
+      userInfoDiv.appendChild(userEmail);
+      userDetailsDiv.appendChild(userImg);
+      userDetailsDiv.appendChild(userInfoDiv);
+
+      // Create action buttons container
+      const actionButtonsDiv = document.createElement('div');
+      actionButtonsDiv.className = 'mt-3 action-buttons d-flex justify-content-between';
+
+      // Accept button
+      const acceptBtn = document.createElement('button');
+      acceptBtn.className = 'btn btn-success btn-sm accept-btn';
+      acceptBtn.innerHTML = '<i class="fas fa-check me-1"></i>Accept';
+      acceptBtn.setAttribute('data-user-id', sender.id);
+      acceptBtn.addEventListener('click', () => handleFriendRequest(sender.id, 'accept', acceptBtn));
+
+      // Decline button
+      const declineBtn = document.createElement('button');
+      declineBtn.className = 'btn btn-danger btn-sm decline-btn';
+      declineBtn.innerHTML = '<i class="fas fa-times me-1"></i>Decline';
+      declineBtn.setAttribute('data-user-id', sender.id);
+      declineBtn.addEventListener('click', () => handleFriendRequest(sender.id, 'decline', declineBtn));
+
+      // Append buttons to the action buttons container
+      actionButtonsDiv.appendChild(acceptBtn);
+      actionButtonsDiv.appendChild(declineBtn);
+
+      // Assemble the card
+      userCardDiv.appendChild(userDetailsDiv);
+      userCardDiv.appendChild(actionButtonsDiv);
+      colDiv.appendChild(userCardDiv);
+
+      // Add the card to the top of the requests list
+      requestsList.prepend(colDiv);
+
+      // Update Requests Badge
+      updateBadge('requestsBadge', 1);
+    }
+
+    // Function to Handle Accept/Decline Friend Requests
+    function handleFriendRequest(userId, action, button) {
+        console.log("user_id------",userId);
+        console.log("action------",action);
+        
+      axios.post('http://127.0.0.1:8000/api/friend-request-list/', {
+        user_id: userId,
+        action: action,
+      }, {
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'
+        }
+      })
+      .then(response => {
+        
+        if (response.data.status === 'success') {
+          // Remove the request card from the UI
+          button.closest('.col-md-4').remove();
+          // Update badges accordingly
+          updateBadge('requestsBadge', -1);
+          showToast(`Friend request ${action}ed successfully.`, 'bg-success');
+
+        }else if(response.data.status ==='decline'){
+          button.closest('.col-md-4').remove();
+        }else {
+          showToast(response.data.message, 'bg-danger');
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        showToast('An error occurred. Please try again.', 'bg-danger');
+      });
+    }
+
+    // Function to Update Badge Counts
+    function updateBadge(badgeId, change) {
+      const badge = document.getElementById(badgeId);
+      let count = parseInt(badge.textContent) || 0;
+      count += change;
+      badge.textContent = count;
+      if (count <= 0) {
+        badge.style.display = 'none';
+      } else {
+        badge.style.display = 'inline';
+      }
+    }
+
+    // Function to Show Toast Notifications
+    function showToast(message, bgColor) {
+      const toastEl = document.getElementById('liveToast');
+      const toastMessage = document.getElementById('toastMessage');
+
+      toastMessage.textContent = message;
+      toastEl.className = `toast align-items-center text-white ${bgColor} border-0`;
+
+      const toast = new bootstrap.Toast(toastEl);
+      toast.show();
+    }
+
+    // Function to Set Up Friend Request Action Buttons for Existing Requests
+    function setupFriendRequestActionButtons() {
+      document.querySelectorAll('.accept-btn, .decline-btn').forEach(button => {
+        button.addEventListener('click', function () {
+          const userId = this.getAttribute('data-user-id');
+          const action = this.classList.contains('accept-btn') ? 'accept' : 'decline';
+          handleFriendRequest(userId, action, this);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

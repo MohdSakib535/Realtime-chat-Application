@@ -21,30 +21,39 @@ from useraccount import views as uv
 from globalchat import views as GC
 from privatechat import views as PV
 from friends import views as F
+from Notification import views as NV
+
 
 router = routers.DefaultRouter()
 router.register(r'user-data', uv.UserAccountView)
 router.register('friend-list',F.Friend_List)
 router.register('friend-request-list',F.Friend_request_List)
+router.register('notification/data',NV.Notification_list,basename="notification_list")
+router.register('read/data',NV.mark_notifications_as_read,basename="notification_read_data")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("",uv.home,name='home'),
+    
    
-    path("pv",uv.Private_chat,name='private_url'),
-    path("rl",uv.Requested_list,name='requested_list'),
-    path("ap",uv.Add_people,name='add_people'),
-    path("up",uv.UserProfile,name='user_profile'),
+    # path("rl",uv.Requested_list,name='requested_list'),
+    # path("ap",uv.Add_people,name='add_people'),
+    # path("up",uv.UserProfile,name='user_profile'),
+    path("",include('useraccount.urls')),
 
-    path('reg',uv.register_view,name='registration'),
-    path('l',uv.Login,name='login'),
+    # path('reg',uv.register_view,name='registration'),
+    # path('l',uv.Login,name='login'),
 
-    path("pu",GC.Public_chat,name='public_url'),
-    path('chat/<str:room_name>/', GC.chat_room, name='chat_room'),
+    path("",include('globalchat.urls')),
 
-    path('explore',PV.Explore_people,name='explore_people'),
+    # path("pu",GC.Public_chat,name='public_url'),
+    # path('chat/<str:room_name>/', GC.chat_room, name='chat_room'),
 
+    path("",include('privatechat.urls')),
 
+    # path('explore',PV.Explore_people,name='explore_people'),
+    path("",include("friends.urls")),
+
+    # path("",include('Notification.urls')),
 
 
     # API 
