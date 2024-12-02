@@ -29,7 +29,8 @@ router.register(r'user-data', uv.UserAccountView)
 router.register('friend-list',F.Friend_List)
 router.register('friend-request-list',F.Friend_request_List)
 router.register('notification/data',NV.Notification_list,basename="notification_list")
-router.register('read/data',NV.mark_notifications_as_read,basename="notification_read_data")
+router.register('read/data',NV.mark_notifications_as_read,basename="notification_read_data"),
+# router.register('friends_data',PV.Friends_viewsets,basename="friend_dta")
 
 urlpatterns = [
     path('admin/', admin.site.urls),

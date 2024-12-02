@@ -122,7 +122,10 @@ class Friend_request_List(viewsets.ModelViewSet):
                 object_id=friend_request.id,
 
             )
-            print("- notification data--",notification.verb)
+            from privatechat.models import PrivateChatRoom
+            private_chats_data=PrivateChatRoom(user1=sender,user2=request.user)
+            private_chats_data.save()
+
 
 
             # Send real-time notification via channel layer

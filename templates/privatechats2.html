@@ -162,36 +162,45 @@
       margin-bottom: 1rem;
     }
 
-    .message {
+    /* Message Wrapper */
+    .message-wrapper {
       display: flex;
-      flex-direction: column;
       margin-bottom: var(--message-margin-bottom);
     }
 
-    .message.sent {
-      align-items: flex-end;
+    /* Align sent messages to the right */
+    .message-wrapper.sent {
+      justify-content: flex-end;
     }
 
-    .message.received {
-      align-items: flex-start;
+    /* Align received messages to the left */
+    .message-wrapper.received {
+      justify-content: flex-start;
     }
 
-    .message .message-text {
+    /* Message Bubble */
+    .message {
+      max-width: var(--message-text-max-width);
+    }
+
+    /* Sent message styles */
+    .message-wrapper.sent .message-text {
+      background-color: #0d6efd;
+      color: #ffffff;
       padding: var(--message-text-padding);
       border-radius: var(--message-text-border-radius);
-      max-width: var(--message-text-max-width);
       word-wrap: break-word;
       line-height: 1.4;
     }
 
-    .message.sent .message-text {
-      background-color: #0d6efd;
-      color: #ffffff;
-    }
-
-    .message.received .message-text {
+    /* Received message styles */
+    .message-wrapper.received .message-text {
       background-color: #f1f0f0;
       color: #000000;
+      padding: var(--message-text-padding);
+      border-radius: var(--message-text-border-radius);
+      word-wrap: break-word;
+      line-height: 1.4;
     }
 
     /* Chat Input */
@@ -249,16 +258,31 @@
               aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      
+      
+        
+      
+        
+      <div class="collapse navbar-collapse justify-content-end" 
+      id="navbarNav">
         <ul class="navbar-nav align-items-center">
+          {% if not request.user.is_authenticated %}
           <li class="nav-item">
-            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Logins</a>
           </li>
           <li class="nav-item">
             <a class="nav-link btn btn-primary text-white ms-3" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Signup</a>
           </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">{{request.user}}-{{request.user.id}}</a>
+          </li>
+          
+          {% endif %}
         </ul>
+      
       </div>
+      
     </div>
   </nav>
 
@@ -271,15 +295,13 @@
         <!-- Example Friend Items -->
         {% if friend_data %}
           {% for i in friend_data %}
-            <div class="list-group-item friend-item" data-friend-id="{{i.user1.id}}">
-              <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Friend {{i.user1.id}}">
+            <div class="list-group-item friend-item" data-friend-id="{{i.id}}">
+              <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="#">
               <div class="friend-info" id="friend-{{i.user1.id}}">
-                <span class="friend-name">{{i.user1.username}}</span>
+                <span class="friend-name">{{i.username}}</span>
                 <span class="friend-status" style="visibility: hidden;">
                   <i class="fas fa-circle text-danger me-1"></i>Offline
                 </span>
-                <!-- Uncomment below line to display Online status -->
-                <!-- <i class="fas fa-circle text-success me-1"></i>Online -->
               </div>
             </div>
           {% endfor %}
@@ -303,18 +325,7 @@
 
         <!-- Chat Messages -->
         <div class="chat-messages" id="chatMessages">
-          <!-- Example Messages -->
-          <div class="message received">
-            <div class="message-text">
-              Hello! How are you today?
-            </div>
-          </div>
-          <div class="message sent">
-            <div class="message-text">
-              Hi John! I'm doing well, thanks for asking.
-            </div>
-          </div>
-          <!-- More messages will appear here -->
+          <!-- Chat messages will appear here -->
         </div>
 
         <!-- Chat Input -->
@@ -424,33 +435,22 @@
   
   <!-- Custom JavaScript -->
   <script>
-    // Handle Friend Selection
+    // Initialize global variables
+    let currentFriendId = null;
+    let ws = null; // WebSocket connection
     const friendItems = document.querySelectorAll('.friend-item');
-    const chat_header=document.querySelector('.chat-header');
-    console.log('hed------',chat_header);
-    
+    const chat_header = document.querySelector('.chat-header');
     const currentFriendName = document.getElementById('currentFriendName');
     const currentFriendAvatar = document.getElementById('currentFriendAvatar');
     const currentFriendStatus = document.getElementById('currentFriendStatus');
     const chatMessages = document.getElementById('chatMessages');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
 
-    // Dummy Chat Histories for Friends
-    const chatHistories = {
-      1: [
-        { type: 'received', text: 'Hello! How are you today?' },
-        { type: 'sent', text: "Hi John! I'm doing well, thanks for asking." }
-      ],
-      2: [
-        { type: 'received', text: 'Hey Jane, long time no see!' },
-        { type: 'sent', text: "Hi Mike! Indeed, it's been a while." }
-      ],
-      3: [
-        { type: 'received', text: 'Good morning, Mike!' },
-        { type: 'sent', text: 'Good morning! Ready for the game tonight?' }
-      ]
-      // Add more chat histories as needed
-    };
+    // Initialize an empty object to store chat histories
+    const chatHistories = {};
 
+    // Handle Friend Selection
     friendItems.forEach(friend => {
       friend.addEventListener('click', function(e) {
         // Remove active class from all friends
@@ -459,9 +459,6 @@
         this.classList.add('active');
         // Update current friend details
         const friendName = this.querySelector('.friend-name').textContent;
-
-        console.log('friend-name--------',friendName);
-        
         const friendAvatar = this.querySelector('img').src;
         const friendStatus = this.querySelector('.friend-status').innerHTML;
 
@@ -469,20 +466,25 @@
         currentFriendAvatar.src = friendAvatar;
         currentFriendStatus.innerHTML = friendStatus;
 
+        currentFriendId = this.getAttribute('data-friend-id');
+        console.log('curr------',currentFriendId);
         
-        const friendId = this.getAttribute('data-friend-id');
-        chat_header.id = `chat-header-${friendId}`;
+        chat_header.id = `chat-header-${currentFriendId}`;
 
-        
-        initialize_socket(friendId);
-        loadChatHistory(friendId);
+        // Close existing WebSocket connection if any
+        if (ws) {
+          ws.close();
+        }
+
+        initialize_socket(currentFriendId);
+        loadChatHistory(currentFriendId);
       });
     });
 
     function initialize_socket(friendId){
       // Initialize WebSocket connection
       const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      const ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/private/chat/${friendId}/`);
+      ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/private/chat/${friendId}/`);
       
       ws.onopen = function(){
         console.log('WebSocket connection is open for private chats.');
@@ -492,70 +494,81 @@
         console.log("Received message:", event);
 
         const parsed_data = JSON.parse(event.data);
-        const user_active_status = parsed_data['status'];
-        const friend_name = parsed_data['other user']['username'];
-        const friend_id = parsed_data['other user']['id'];
 
-        updateFriendStatus(friend_id, user_active_status);
-      }
+        console.log('--p-==--', parsed_data);
 
-      // Function to update friend status
-      function updateFriendStatus(friendId, isOnline){
-        console.log(friendId);
+        if (parsed_data['type'] === 'user_status') {
 
-        get_chat_header=document.getElementById(`chat-header-${friendId}`)
-        console.log("********---------",get_chat_header.childNodes);
+          console.log('.......if....');
+          
+          // Handle status updates
+          const user_active_status = parsed_data['status'];
+          const friend_name = parsed_data['other user']['username'];
+          const friend_id = parsed_data['other user']['id'];
+          updateFriendStatus(friend_id, user_active_status);
+          
+        } else if (parsed_data['friend_data']['type'] == 'user_chat_message') {
+          console.log('++++++++ else___');
+          
+          // Handle incoming chat messages
+          const message = parsed_data['message'];
+          const senderId = parsed_data['friend_data']['id']; // Ensure this is provided by the server
 
-        const avatar = get_chat_header.querySelector('img');
-        const name = get_chat_header.querySelector('h5');
-        // console.log('name----',name);
-
-        const status_color  = get_chat_header.querySelector('span');
-        console.log('stst------',status_color);
-        
-        const statusIcon  = status_color.querySelector('svg');
-
-        console.log('--',statusIcon);
-        
+          // Append received message if it's from the current friend
+          console.warn(senderId, currentFriendId);
 
 
-      
-        
-        if (!friendItem) return;
 
-        // const statusIcon = friendItem.querySelector('.friend-status i');
-        // console.warn(statusIcon);
-        
-        const statusText = friendItem.querySelector('.friend-status');
+          if (String(senderId) != String(currentFriendId)) {
+            console.log('-----if------')
+            appendMessage("received", message);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          } else {
+            console.log('elde------====')
 
-        if(isOnline === 'online'){
-          statusIcon.classList.remove('text-danger'); // Remove offline class
-          statusIcon.classList.add('text-success');  // Add online class
-          statusText.innerHTML = '<i class="fas fa-circle text-success me-1"></i>Online';
-        } else {
-          statusIcon.classList.remove('text-success'); // Remove online class
-          statusIcon.classList.add('text-danger');  // Add offline class
-          statusText.innerHTML = '<i class="fas fa-circle text-danger me-1"></i>Offline';
+            // Optionally, handle notifications for messages from other friends
+            // appendMessage(currentFriendId, parsed_data['message']);
+
+            console.log(`New message from friend ${senderId}`);
+          }
+
+          // Store message in chat history
+          if (!chatHistories[senderId]) {
+            chatHistories[senderId] = [];
+          }
+          // chatHistories[senderId].push({ type: 'received', text: message });
+          // console.log("chat his****_---------",chatHistories);
+          
         }
       }
 
-      const messageForm = document.getElementById('messageForm');
-      const messageInput = document.getElementById('messageInput');
-      
-      messageForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const message = messageInput.value.trim();
-        if (message === '') return;
-
-        // Append sent message
-        appendMessage('sent', message);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // Send message via WebSocket
-        ws.send(JSON.stringify({'message': message}));
-        messageInput.value = '';
-      });
+      ws.onclose = function(){
+        console.log('WebSocket connection closed.');
+      }
     }
+
+    // Message Form Submission
+    messageForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (message === '') return;
+
+      // Append sent message
+      appendMessage('sent', message);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      console.warn(currentFriendId);
+      
+
+      // Store message in chat history
+      if (!chatHistories[currentFriendId]) {
+        chatHistories[currentFriendId] = [];
+      }
+      chatHistories[currentFriendId].push({ type: 'sent', text: message });
+
+      // Send message via WebSocket
+      ws.send(JSON.stringify({'message': message,"friend_id":currentFriendId}));
+      messageInput.value = '';
+    });
 
     // Function to Load Chat History
     function loadChatHistory(friendId) {
@@ -571,13 +584,38 @@
     // Function to Append Message
     function appendMessage(type, text) {
       const messageElement = document.createElement('div');
-      messageElement.classList.add('message', type === 'sent' ? 'sent' : 'received');
+      messageElement.classList.add('message-wrapper', type === 'sent' ? 'sent' : 'received');
       messageElement.innerHTML = `
-        <div class="message-text">
-          ${text}
+        <div class="message">
+          <div class="message-text">
+            ${text}
+          </div>
         </div>
       `;
       chatMessages.appendChild(messageElement);
+    }
+
+    // Function to Update Friend Status
+    function updateFriendStatus(friendId, isOnline){
+      // Update status in the friend list
+      const friendItem = document.querySelector(`.friend-item[data-friend-id="${friendId}"]`);
+      if (friendItem) {
+        const statusText = friendItem.querySelector('.friend-status');
+        if(isOnline === 'online'){
+          statusText.innerHTML = '<i class="fas fa-circle text-success me-1"></i>Online';
+        } else {
+          statusText.innerHTML = '<i class="fas fa-circle text-danger me-1"></i>Offline';
+        }
+      }
+
+      // Update status in the chat header if the friend is currently selected
+      if (friendId === currentFriendId) {
+        if(isOnline === 'online'){
+          currentFriendStatus.innerHTML = '<i class="fas fa-circle text-success me-1"></i>Online';
+        } else {
+          currentFriendStatus.innerHTML = '<i class="fas fa-circle text-danger me-1"></i>Offline';
+        }
+      }
     }
 
     // Optional: Handle Login and Signup Form Submissions
@@ -605,7 +643,6 @@
     // Initialize Chat with First Friend on Page Load
     document.addEventListener('DOMContentLoaded', () => {
       if (friendItems.length > 0) {
-        
         friendItems[0].click();
       }
     });

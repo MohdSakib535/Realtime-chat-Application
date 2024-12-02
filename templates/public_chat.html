@@ -325,6 +325,8 @@ chatRooms.forEach(room => {
     // Handle WebSocket messages (incoming messages)
     ws.onmessage = function(event) {
       const data = JSON.parse(event.data);
+      console.log('on mes----------',data);
+      
       
       if(data.type === 'user_join'){
         
@@ -361,6 +363,7 @@ chatRooms.forEach(room => {
       
       const messageElement = document.createElement('div');
       print('data user-----',data.user_name)
+      print('curr user-----',currentUsername)
 
       if (data.user_name === currentUsername) {
         console.log('if');

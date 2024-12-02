@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-# from Notification.utils import send_notification_to_user
+
 
 # from chat.utils import find_or_create_private_chatf
 from Notification.models import Notification
@@ -173,4 +173,4 @@ def create_notification(sender, instance, created, **kwargs):
             content_type=content_type,
 			object_id=instance.id
         )
-		# send_notification_to_user(instance.receiver.id, notification.verb)
+		
