@@ -32,7 +32,11 @@ def Private_chat(request):
     for i in friend_data3:
         print('---i----',i.username)
 
+
+    
+
     context['friend_data']=friend_data3
+    context['user_id']=request.user.id
     # return render(request,'private_chats.html',context)
     return render(request,'privatechats2.html',context)
 
@@ -42,10 +46,83 @@ def Private_chat(request):
 APi section
 """
 
-# from privatechat.serializers import Friends_serializers
-# from privatechat.models import PrivateChatRoom
-# class Friends_viewsets(viewsets.ModelViewSet):
-#     queryset=PrivateChatRoom.objects.filter(Q(user1=request.user))
+from rest_framework.generics import ListAPIView
+from .models import RoomChatMessage
+from rest_framework import generics, permissions
+from .serializers import PrivateChatRoomSerializer,RoomChatMessageSerializer
+from rest_framework.permissions import IsAuthenticated
 
+# class RoomChatMessageListView(ListAPIView):
+#     """
+#     API to retrieve chat messages for a specific room.
+#     """
+#     serializer_class = RoomChatMessageSerializer
+#     permission_classes = [IsAuthenticated]
+
+#     # def get_queryset(self):
+#     #     room_id = self.kwargs['room_id']
+#     #     return RoomChatMessage.objects.filter(room_id=room_id).order_by('timestamp')
+
+#     def get_queryset(self):
+#         user = self.request.user
+#         print('user----',user)
+#         other_user_id = self.kwargs['other_user']
+#         print('other user-----',other_user_id)
+#         room = PrivateChatRoom.objects.filter(
+#             (Q(user1=user) & Q(user2__id=other_user_id)) |
+#             (Q(user2=user) & Q(user1__id=other_user_id))
+#         ).first()
+#         print('room-------',room)
+#         if room:
+#             return RoomChatMessage.objects.filter(room=room).order_by('timestamp')
+#         return RoomChatMessage.objects.none()
+
+class PrivateChatRoomListView(generics.ListAPIView):
+    """
+    API view to list all private chat rooms for the current user.
+    """
+    serializer_class = PrivateChatRoomSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return PrivateChatRoom.objects.filter(Q(user1=user) | Q(user2=user)).order_by('-messages__timestamp').distinct()
     
-#     pass
+
+class RoomChatMessageListView(generics.ListAPIView):
+    """
+    API view to list all messages in a specific chat room.
+    """
+    serializer_class = RoomChatMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        print('curr-----',user.id)
+        other_user_id = self.kwargs['other_user']
+        print('other-----',other_user_id)
+
+        # Validate that other_user_id is an integer
+        try:
+            other_user_id = int(other_user_id)
+        except ValueError:
+            return RoomChatMessage.objects.none()
+
+        # Find the chat room between the current user and the other user
+        # room = PrivateChatRoom.objects.filter(
+        #     (Q(user1=user) & Q(user2__id=other_user_id)) |
+        #     (Q(user2=user) & Q(user1__id=other_user_id))
+        # ).select_related('user1', 'user2').first()
+        # print("****--room--",room)
+
+        room = (PrivateChatRoom.objects.filter(user1=user, user2_id=other_user_id) |
+            PrivateChatRoom.objects.filter(user1_id=other_user_id, user2=user)).first()
+        print("****--room--",room)
+
+
+        
+
+        if room:
+            messages = RoomChatMessage.objects.filter(room=room).select_related('user').order_by('timestamp')
+            return messages
+        return RoomChatMessage.objects.none()

@@ -432,9 +432,17 @@
   
   <!-- Font Awesome JS for Icons -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+
   
   <!-- Custom JavaScript -->
   <script>
+    const current_user_data = "{{user_id|safe}}";
+    console.log('current---====',current_user_data);
+    
+
     // Initialize global variables
     let currentFriendId = null;
     let ws = null; // WebSocket connection
@@ -495,11 +503,11 @@
 
         const parsed_data = JSON.parse(event.data);
 
-        console.log('--p-==--', parsed_data);
+        // console.log('--p-==--', parsed_data);
 
         if (parsed_data['type'] === 'user_status') {
 
-          console.log('.......if....');
+          // console.log('.......if....');
           
           // Handle status updates
           const user_active_status = parsed_data['status'];
@@ -508,7 +516,7 @@
           updateFriendStatus(friend_id, user_active_status);
           
         } else if (parsed_data['friend_data']['type'] == 'user_chat_message') {
-          console.log('++++++++ else___');
+          // console.log('++++++++ else___');
           
           // Handle incoming chat messages
           const message = parsed_data['message'];
@@ -520,11 +528,11 @@
 
 
           if (String(senderId) != String(currentFriendId)) {
-            console.log('-----if------')
+            // console.log('-----if------')
             appendMessage("received", message);
             chatMessages.scrollTop = chatMessages.scrollHeight;
           } else {
-            console.log('elde------====')
+            // console.log('elde------====')
 
             // Optionally, handle notifications for messages from other friends
             // appendMessage(currentFriendId, parsed_data['message']);
@@ -570,15 +578,46 @@
       messageInput.value = '';
     });
 
+
+
     // Function to Load Chat History
-    function loadChatHistory(friendId) {
+    async function loadChatHistory(friendId) {
+      console.log("***********************chat load");
+      console.log('@@@@@@@@@@@@###-----',friendId);
+      
+      
       chatMessages.innerHTML = ''; // Clear existing messages
-      const history = chatHistories[friendId] || [];
-      history.forEach(msg => {
-        appendMessage(msg.type, msg.text);
-      });
+      url=`http://127.0.0.1:8000/chat/messages/${friendId}/`
+      
+      try{
+        const response = await axios.get(url);
+        const message=response.data;
+        console.log('message------',message);
+        message.forEach(msg=>{
+          const msgType=msg.user.id === parseInt(current_user_data) ? "sent" :"received";
+          appendMessage(msgType,msg.content)
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+          // Store in chatHistories
+          if (!chatHistories[friendId]) {
+            chatHistories[friendId] = [];
+          }
+          chatHistories[friendId].push({ type: msgType, text: msg.content });
+
+        });
+        
+
+        
+      } catch(err){
+        console.error('Error fetching chat history:', err);
+        
+      }
+
+      // const history = chatHistories[friendId] || [];
+      // history.forEach(msg => {
+      //   appendMessage(msg.type, msg.text);
+      // });
       // Scroll to bottom
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+      // chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     // Function to Append Message

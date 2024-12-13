@@ -15,6 +15,7 @@ from Notification.routing import websocket_urlpatterns_notification as notificat
 from globalchat.routing import websocket_urlpattern as public_chat_url
 from friends.routing import websocket_urlpatterns as friend_related_url
 from privatechat.routings import websocket_urlpattern as private_chat_url
+from videoCall.routing import websocket_urlpatterns_video as video_call
 from channels.auth import AuthMiddlewareStack
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ChatApplication.settings')
@@ -26,7 +27,8 @@ application = ProtocolTypeRouter({
         public_chat_url+
         notification_chat_url+
         friend_related_url+
-        private_chat_url
+        private_chat_url+
+        video_call
         
     )
     )

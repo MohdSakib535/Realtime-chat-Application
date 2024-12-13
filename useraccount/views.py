@@ -4,10 +4,11 @@ from django.contrib.auth import login, authenticate, logout
 from rest_framework import routers ,viewsets
 from useraccount.models import CustomUser
 from useraccount.serializers import user_account_Serializers
+from django.contrib.auth.decorators import login_required
 # Create your views here.
 
 
-
+@login_required(login_url='/login/')
 def home(request):
     return render(request,'home.html')
 

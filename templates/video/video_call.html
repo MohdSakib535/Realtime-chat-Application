@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h3>Video Call with {{ callee.username }}</h3>
+<div class="row">
+    <div class="col-md-6">
+        <video id="localVideo" class="border" autoplay muted style="width: 100%;"></video>
+    </div>
+    <div class="col-md-6">
+        <video id="remoteVideo" class="border" autoplay style="width: 100%;"></video>
+    </div>
+</div>
+<div class="mt-3 text-center">
+    <button class="btn btn-danger" onclick="endCall()">End Call</button>
+</div>
+<script>
+    // WebRTC logic will go here
+    function endCall() {
+        alert("Call ended!");
+    }
+</script>
+{% endblock %}

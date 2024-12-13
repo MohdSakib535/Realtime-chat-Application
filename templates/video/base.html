@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Call Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Prevent scroll on the page */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Disable scrolling */
+        }
+
+        .video-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%; /* Take full height of the viewport */
+            gap: 20px;
+        }
+
+        .video-box {
+            flex: 1;
+            max-width: 500px;  /* Limit video box size */
+            border: 2px solid #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .dropdown-menu {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container">
+    <h1 class="text-center mt-4">Video Call Interface</h1>
+
+    <div class="d-flex justify-content-end">
+        <!-- Dynamic Dropdown for User List -->
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="userListDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Users in Room
+            </button>
+            <ul class="dropdown-menu" id="userList">
+                <!-- Dynamic user entries will be added here -->
+            </ul>
+        </div>
+    </div>
+
+    <div class="video-container mt-3">
+        <!-- Local Video -->
+        <div class="video-box">
+            <h5 class="text-center bg-dark text-light py-2">Your Video</h5>
+            <video id="localVideo" autoplay muted></video>
+        </div>
+
+        <!-- Remote Video -->
+        <div class="video-box">
+            <h5 class="text-center bg-dark text-light py-2">Remote Video</h5>
+            <video id="remoteVideo" autoplay></video>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button id="startCallBtn" class="btn btn-success me-3">Start Call</button>
+        <button id="endCallBtn" class="btn btn-danger">End Call</button>
+    </div>
+</div>
+
+<script>
+
+    const room_name="{{ room_name }}"
+    console.log(room_name);
+    
+
+    // const roomName = "testRoom";  // Change this to dynamically pass the room name
+    const current_username ="{{curent_user}}"
+
+
+    // DOM Elements
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const startCallBtn = document.getElementById('startCallBtn');
+    const endCallBtn = document.getElementById('endCallBtn');
+    const userListDropdown = document.getElementById('userList');
+
+    // WebRTC and WebSocket Variables
+    let localStream;
+    let peerConnection;
+    const configuration = {
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    };
+    console.log("--cccconfiguration----",configuration);
+    
+    const ws = new WebSocket(`ws://${window.location.host}/ws/videoCall/${room_name}/`);
+    console.log("web-------",ws);
+    
+
+    // let pendingCandidates = [];  // Temporary storage for ICE candidates
+
+    // WebSocket Handlers
+    ws.onopen = () => console.log("WebSocket connected for video call");
+    ws.onclose = () => console.log("WebSocket disconnected for video call");
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.action === 'signal_message') {
+            handleSignalMessage(data.signal_data, data.username);
+        } else if (data.action === 'user_joined') {
+            addUserToList(data.username);
+            // Start the video call only if localStream is available
+            if (localStream) {
+                startVideoCall(data.username);  // New user joined, initiate signaling if necessary
+            } else {
+                console.log("Local stream not yet initialized.");
+            }
+        } else if (data.action === 'user_left') {
+            removeUserFromList(data.username);
+        }
+    };
+
+    // Add User to List
+    function addUserToList(username) {
+        const userItem = document.createElement("li");
+        userItem.className = "dropdown-item";
+        userItem.textContent = username;
+        userItem.id = `user-${username}`;
+        userItem.onclick = () => alert(`You clicked on ${username}`);
+        userListDropdown.appendChild(userItem);
+    }
+
+    // Remove User from List
+    function removeUserFromList(username) {
+        const userItem = document.getElementById(`user-${username}`);
+        if (userItem) {
+            userItem.remove();
+        }
+    }
+
+    // Send Signaling Data (offer, answer, or ICE candidate) to the WebSocket server
+    function sendSignal(action, signalData) {
+        ws.send(JSON.stringify({
+            action: action,
+            username: current_username,  // Replace with the current user's username
+            signal_data: signalData
+        }));
+    }
+
+    // Handle Incoming Signaling Messages
+    let pendingCandidates = [];
+    let isPeerConnectionReady = false;
+
+    async function handleSignalMessage(signalData, username) {
+    try {
+        if (!peerConnection) {
+            await createPeerConnection();
+        }
+
+        if (signalData.type === "offer") {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(signalData));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            sendSignal("send_signal", peerConnection.localDescription);
+        } else if (signalData.type === "answer") {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(signalData));
+        } else if (signalData.candidate) {
+            const candidate = new RTCIceCandidate(signalData);
+            if (isPeerConnectionReady) {
+                await peerConnection.addIceCandidate(candidate);
+            } else {
+                pendingCandidates.push(candidate);
+            }
+        }
+    } catch (error) {
+        console.error("Error handling signal message:", error);
+    }
+}
+
+    function createPeerConnection() {
+        peerConnection = new RTCPeerConnection(configuration);
+
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                sendSignal("send_signal", event.candidate);
+            }
+        };
+
+        peerConnection.ontrack = (event) => {
+            remoteVideo.srcObject = event.streams[0];
+        };
+
+        peerConnection.onconnectionstatechange = () => {
+            if (peerConnection.connectionState === 'connected') {
+                isPeerConnectionReady = true;
+                pendingCandidates.forEach(async (candidate) => {
+                    await peerConnection.addIceCandidate(candidate).catch(e => console.error(e));
+                });
+                pendingCandidates = [];
+            }
+        };
+
+
+        if (localStream) {
+        localStream.getTracks().forEach((track) => peerConnection.addTrack(track, localStream));
+        } else {
+            console.error("Local stream is not initialized.");
+        }
+
+
+
+        // localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        // peerConnection.onnegotiationneeded = async () => {
+        //     try {
+        //         const offer = await peerConnection.createOffer();
+        //         await peerConnection.setLocalDescription(offer);
+        //         sendSignal("send_signal", peerConnection.localDescription);
+        //     } catch (err) {
+        //         console.error("Error during negotiation", err);
+        //     }
+        // };
+    }
+
+    
+
+
+
+
+    // Define the startVideoCall function
+    function startVideoCall(username) {
+        // Ensure the local stream is already initialized
+        if (localStream) {
+            // If no active call exists, initiate one
+            if (!peerConnection) {
+                peerConnection = new RTCPeerConnection(configuration);
+
+                // Set up the onicecandidate handler for ICE candidates
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        sendSignal("send_signal", event.candidate);
+                    }
+                };
+
+                // Handle remote stream
+                peerConnection.ontrack = (event) => {
+                    remoteVideo.srcObject = event.streams[0];
+                };
+
+                // Add local stream to PeerConnection
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                // Create and send offer to new user
+                peerConnection.createOffer().then((offer) => {
+                    return peerConnection.setLocalDescription(offer);
+                }).then(() => {
+                    sendSignal("send_signal", peerConnection.localDescription);
+                }).catch((error) => {
+                    console.error("Error during video call setup:", error);
+                });
+            }
+        } else {
+            console.error("Local stream not initialized yet!");
+        }
+    }
+
+
+    async function initializeLocalStream() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideo.srcObject = localStream; // Attach the local stream to the video element
+            console.log("Local stream initialized:", localStream);
+        } catch (error) {
+            console.error("Error initializing local stream:", error);
+            if (error.name === 'NotAllowedError') {
+                alert('Permissions have not been granted to use your camera and microphone. Please allow access.');
+            } else if (error.name === 'NotFoundError') {
+                alert('No camera or microphone found. Please connect your devices.');
+            } else {
+                alert('Error accessing media devices: ' + error.message);
+            }
+        }
+    }
+
+
+
+
+
+    // WebRTC Logic to start the call
+    startCallBtn.addEventListener("click", async () => {
+        try {
+            if (!localStream){
+                // Get local media (video and audio)
+                await initializeLocalStream();
+
+            }
+            
+
+            // If there is an active call, do nothing, otherwise initiate the call
+            if (!peerConnection) {
+                await createPeerConnection();
+                // startVideoCall("New User");
+            }
+        } catch (error) {
+            console.error("Error starting call:", error);
+            if (error.name === 'NotAllowedError') {
+            alert('Permissions have not been granted to use your camera and microphone. Please allow access.');
+        } else if (error.name === 'NotFoundError') {
+            alert('No camera or microphone found. Please connect your devices.');
+        } else {
+            alert('Error accessing media devices: ' + error.message);
+        }
+
+        }
+    });
+
+    // window.onload = async () => {
+    // await initializeLocalStream();
+    // };
+
+    endCallBtn.addEventListener("click", () => {
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        if (peerConnection) {
+            peerConnection.close();
+        }
+        localVideo.srcObject = null;
+        remoteVideo.srcObject = null;
+        console.log("Call ended");
+    });
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

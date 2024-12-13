@@ -1,7 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.utils import timezone
-from .models import PrivateChatRoom
+from .models import PrivateChatRoom,RoomChatMessage
 from useraccount.models import CustomUser
 from channels.db import database_sync_to_async 
 from django.core.cache import cache
@@ -78,8 +78,16 @@ class privateChatConsumer(AsyncWebsocketConsumer):
         print(data)
         message=data.get('message')
         friend_id=data.get('friend_id')
+        current_user = self.scope['user']
         print('room_name--rec---',self.room_name)
         print('frie------',friend_id)
+
+        if current_user.is_anonymous:
+            return
+
+        
+        # Save the chat message to the database
+        await self.save_chat_message(current_user.id, friend_id, message)
 
         await self.channel_layer.group_send(
             self.room_name,
@@ -105,7 +113,27 @@ class privateChatConsumer(AsyncWebsocketConsumer):
         }))
 
 
+    @database_sync_to_async
+    def save_chat_message(self, user_id, friend_id, message):
+        """
+        Save a chat message to the database.
+        """
+        room = PrivateChatRoom.objects.filter(
+            user1__id=user_id, user2__id=friend_id
+        ).first() or PrivateChatRoom.objects.filter(
+            user1__id=friend_id, user2__id=user_id
+        ).first()
+
+        if room:
+            RoomChatMessage.objects.create(
+                user_id=user_id,
+                room=room,
+                content=message,
+            )
+
+
     
+
         
         
    

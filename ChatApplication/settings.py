@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'privatechat',
     'Notification',
     'friends',
+    'videoCall',
     'rest_framework',
 ]
 

@@ -22,8 +22,30 @@ class PrivateChatRoom(models.Model):
 	is_active= models.BooleanField(default=False)
 	
 
-	# def __str__(self):
-	# 	return f"user1 {self.user1.username} and user2 {self.user2.username}"
+	def __str__(self):
+		return str(self.id)
+		# return f"user1 {self.user1.username} and user2 {self.user2.username}"
+
+	# def save(self, *args, **kwargs):
+	# 	if self.user1.id > self.user2.id:
+    #         self.user1, self.user2 = self.user2, self.user1
+    #     super().save(*args, **kwargs)
+
+
+	 
+	# class Meta:
+	# 	constraints = [
+    #         models.UniqueConstraint(
+    #             fields=["user1", "user2"],
+    #             name="unique_chat_room_between_users",
+    #         ),
+    #         models.CheckConstraint(
+    #             check=models.Q(user1__lt=models.F("user2")),
+    #             name="user1_less_than_user2",
+    #         ),
+    #     ]
+
+
 
 
 	def connect_user(self, user):
@@ -47,6 +69,8 @@ class PrivateChatRoom(models.Model):
 			is_user_removed = True
 		return is_user_removed
 
+
+    
 	@property
 	def group_name(self):
 		"""
@@ -54,6 +78,12 @@ class PrivateChatRoom(models.Model):
 		messages as they are generated.
 		"""
 		return f"PrivateChatRoom-{self.id}"
+	
+
+	
+
+	
+
 
 
     
@@ -70,7 +100,7 @@ class RoomChatMessage(models.Model):
 	Chat message created by a user inside a Room
 	"""
 	user                = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-	room                = models.ForeignKey(PrivateChatRoom, on_delete=models.CASCADE)
+	room                = models.ForeignKey(PrivateChatRoom, on_delete=models.CASCADE,related_name="messages")
 	timestamp           = models.DateTimeField(auto_now_add=True)
 	content             = models.TextField(unique=False, blank=False,)
 

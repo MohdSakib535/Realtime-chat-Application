@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h3>Room: {{ room.name }}</h3>
+        <div class="chat-box border rounded p-3 mb-3" style="height: 400px; overflow-y: scroll;">
+            {% for message in messages %}
+            <div>
+                <strong>{{ message.sender.username }}:</strong> {{ message.content }}
+                <small class="text-muted float-end">{{ message.timestamp }}</small>
+            </div>
+            <hr>
+            {% endfor %}
+        </div>
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="text" class="form-control" name="message" placeholder="Type a message..." required>
+                <button class="btn btn-primary" type="submit">Send</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <h3>Participants</h3>
+        <ul class="list-group">
+            {% for participant in room.participants.all %}
+            <li class="list-group-item">{{ participant.username }}</li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <a href="#" class="btn btn-success w-100" onclick="startVideoCall()">Start Video Call</a>
+    </div>
+</div>
+<script>
+    function startVideoCall() {
+        alert("Video call feature coming soon!");
+    }
+</script>
+{% endblock %}
