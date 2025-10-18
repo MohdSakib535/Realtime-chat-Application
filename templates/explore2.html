@@ -785,7 +785,7 @@
         console.log("user_id------",userId);
         console.log("action------",action);
         
-      axios.post('http://127.0.0.1:8000/api/friend-request-list/', {
+      axios.post('/api/friend-request-list/', {
         user_id: userId,
         action: action,
       }, {
