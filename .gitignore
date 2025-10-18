@@ -1,0 +1,39 @@
+# 🐍 Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 🧱 Django stuff
+db.sqlite3
+*.log
+*.pot
+*.pyc
+
+# 🧪 Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# 📦 Python packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 🧠 IDE & OS junk
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 🪣 Test & coverage reports
+.coverage
+htmlcov/
+.pytest_cache/
+.cache/
+
+# 📸 Media / static uploads (if any)
+media/
+uploads/
