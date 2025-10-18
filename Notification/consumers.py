@@ -149,10 +149,16 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         notification = event['notification']
 
         # Send notification to WebSocket
-        await self.send(text_data=json.dumps({
+        payload = {
             'type': 'notification',
-            'notification': notification
-        }))
+            'notification': notification,
+        }
+        # Pass through optional fields if provided
+        for key in ('count', 'event', 'call_url', 'caller_id', 'caller_name'):
+            if key in event:
+                payload[key] = event[key]
+
+        await self.send(text_data=json.dumps(payload))
         print(f"FriendRequestConsumer: Sent notification message to WebSocket.")
 
     @database_sync_to_async
@@ -175,8 +181,6 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         unread=Notification.objects.filter(target_id=id).count()
         print("l--------",unread)
         return unread
-
-
 
 
 

@@ -1,0 +1,53 @@
+<script>
+  console.log("++++++++))))))))+++++++++++++++++++");
+  
+  (function initGlobalNotificationSocket(){
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  const url = `${wsProtocol}://${window.location.host}/ws/friend-requests/`;
+    let socket;
+
+    function ensurePermission() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        try { Notification.requestPermission(); } catch(_) {}
+      }
+    }
+
+    function showIncomingCallPrompt(data) {
+      const msg = `${data.caller_name || 'Someone'} is calling you. Join the video call?`;
+      if (window.Notification && Notification.permission === 'granted') {
+        try { new Notification('Incoming video call', { body: msg }); } catch(_) {}
+      }
+      if (confirm(msg)) {
+        const popup = window.open(data.call_url, '_blank', 'width=1100,height=720');
+        if (!popup) { window.location.href = data.call_url; }
+      }
+    }
+
+    function updateNotificationCount(count) {
+      const el = document.getElementById('notificationCount');
+      if (el && typeof count === 'number') { el.textContent = count; }
+    }
+
+    function connect(){
+      socket = new WebSocket(url);
+      socket.onopen = () => { ensurePermission(); };
+      socket.onmessage = (evt) => {
+        try {
+          const data = JSON.parse(evt.data);
+          if (data.type === 'notification') {
+            if ('count' in data) updateNotificationCount(data.count);
+            if (data.event === 'incoming_call' && data.call_url) {
+              showIncomingCallPrompt(data);
+            }
+          }
+        } catch (e) { /* ignore */ }
+      };
+      socket.onclose = () => {
+        setTimeout(connect, 2000);
+      };
+      socket.onerror = () => { try { socket.close(); } catch(_) {} };
+    }
+    connect();
+  })();
+</script>

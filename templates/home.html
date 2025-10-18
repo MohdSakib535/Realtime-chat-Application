@@ -476,7 +476,7 @@
     });
 
     // WebSocket connection for notifications
-    const wsUrl = `ws://${window.location.host}/ws/notifications/`;
+    const wsUrl = `ws://${window.location.host}/ws/friend-requests/`;
     const notificationSocket = new WebSocket(wsUrl);
 
     // Handle incoming messages
@@ -564,4 +564,5 @@ const notificationBell = document.getElementById('notificationBell');
 
 
 </body>
+{% include 'snippets/global_notifications.html' %}
 </html>

@@ -9,9 +9,16 @@ from django.core.cache import cache
 class privateChatConsumer(AsyncWebsocketConsumer):
 
     def get_room_name(self,user1_id, user2_id):
-        """Generate a unique room name for two users."""
-        sorted_ids = sorted([str(user1_id), str(user2_id)])
-        return f"chat_{sorted_ids[0]}_{sorted_ids[1]}"
+        """Generate a unique room name for two users (numeric sort to match senders)."""
+        try:
+            a = int(user1_id)
+            b = int(user2_id)
+        except (TypeError, ValueError):
+            # Fallback to string sort if casting fails
+            sorted_ids = sorted([str(user1_id), str(user2_id)])
+            return f"chat_{sorted_ids[0]}_{sorted_ids[1]}"
+        x, y = sorted([a, b])
+        return f"chat_{x}_{y}"
 
 
     async def connect(self):
@@ -112,6 +119,16 @@ class privateChatConsumer(AsyncWebsocketConsumer):
             }
         }))
 
+    async def video_call_invite(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'video_call_invite',
+            'call_url': event['call_url'],
+            'call_id': event['call_id'],
+            'caller_id': event['caller_id'],
+            'caller_name': event['caller_name'],
+            'target_id': event['target_id'],
+        }))
+
 
     @database_sync_to_async
     def save_chat_message(self, user_id, friend_id, message):
@@ -158,5 +175,3 @@ class privateChatConsumer(AsyncWebsocketConsumer):
         print("m2-------",m2)
         return m2
         
-
-

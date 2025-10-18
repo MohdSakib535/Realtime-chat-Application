@@ -11,6 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.http import JsonResponse
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 
 
@@ -61,6 +62,7 @@ class Friend_List(viewsets.ModelViewSet):
 class Friend_request_List(viewsets.ModelViewSet):
     queryset = FriendRequest.objects.all()
     serializer_class = FriendsRequestSerializer
+    permission_classes = [IsAuthenticated]
     
     def create(self,request,*args,**kwargs):
         params=request.data
@@ -165,7 +167,6 @@ class Friend_request_List(viewsets.ModelViewSet):
 
 
     
-
 
 
 

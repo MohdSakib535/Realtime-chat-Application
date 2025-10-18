@@ -315,12 +315,15 @@
     <div class="chat-window">
       {% if friend_data %}
         <!-- Chat Header -->
-        <div class="chat-header d-flex align-items-center">
+        <div class="chat-header d-flex align-items-center gap-3">
           <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Current Friend" id="currentFriendAvatar">
-          <div class="chat-head">
+          <div class="chat-head flex-grow-1">
             <h5 id="currentFriendName"></h5>
             <span id="currentFriendStatus"><i class="fas fa-circle text-danger me-1"></i></span>
           </div>
+          <button type="button" class="btn btn-outline-primary" id="startVideoCallBtn" title="Start video call">
+            <i class="fas fa-video"></i>
+          </button>
         </div>
 
         <!-- Chat Messages -->
@@ -454,6 +457,64 @@
     const chatMessages = document.getElementById('chatMessages');
     const messageForm = document.getElementById('messageForm');
     const messageInput = document.getElementById('messageInput');
+    const startVideoCallBtn = document.getElementById('startVideoCallBtn');
+    const startCallUrlTemplate = "{% url 'videoCall:start_call' 99999 %}";
+
+    if (startVideoCallBtn) {
+      startVideoCallBtn.disabled = true;
+    }
+
+    function buildCallUrl(targetId) {
+      return startCallUrlTemplate.replace('99999', targetId);
+    }
+
+    if (startVideoCallBtn) {
+      startVideoCallBtn.addEventListener('click', () => {
+        const friendId = startVideoCallBtn.dataset.friendId;
+        if (!friendId) {
+          return;
+        }
+        const url = buildCallUrl(friendId);
+        openVideoCallWindow(url);
+      });
+    }
+
+    function openVideoCallWindow(url) {
+      const popup = window.open(url, '_blank', 'width=1100,height=720');
+      if (!popup) {
+        window.location.href = url;
+      }
+    }
+
+    async function handleIncomingVideoCall(data) {
+      const targetId = parseInt(data.target_id);
+      if (Number.isNaN(targetId) || parseInt(current_user_data) !== targetId) {
+        return;
+      }
+
+      const message = `${data.caller_name} is calling you. Join the video call?`;
+
+      if (window.Notification && Notification.permission === 'default') {
+        try {
+          await Notification.requestPermission();
+        } catch (err) {
+          console.warn('Notification permission request failed', err);
+        }
+      }
+
+      if (window.Notification && Notification.permission === 'granted') {
+        try {
+          new Notification('Incoming video call', { body: message });
+        } catch (err) {
+          console.warn('Notification API error', err);
+        }
+      }
+
+      const shouldJoin = confirm(message);
+      if (shouldJoin) {
+        openVideoCallWindow(data.call_url);
+      }
+    }
 
     // Initialize an empty object to store chat histories
     const chatHistories = {};
@@ -478,6 +539,11 @@
         console.log('curr------',currentFriendId);
         
         chat_header.id = `chat-header-${currentFriendId}`;
+
+        if (startVideoCallBtn) {
+          startVideoCallBtn.disabled = false;
+          startVideoCallBtn.dataset.friendId = currentFriendId;
+        }
 
         // Close existing WebSocket connection if any
         if (ws) {
@@ -506,47 +572,26 @@
         // console.log('--p-==--', parsed_data);
 
         if (parsed_data['type'] === 'user_status') {
-
-          // console.log('.......if....');
-          
-          // Handle status updates
           const user_active_status = parsed_data['status'];
           const friend_name = parsed_data['other user']['username'];
           const friend_id = parsed_data['other user']['id'];
           updateFriendStatus(friend_id, user_active_status);
-          
-        } else if (parsed_data['friend_data']['type'] == 'user_chat_message') {
-          // console.log('++++++++ else___');
-          
-          // Handle incoming chat messages
+        } else if (parsed_data['type'] === 'video_call_invite') {
+          handleIncomingVideoCall(parsed_data);
+        } else if (parsed_data['friend_data'] && parsed_data['friend_data']['type'] === 'user_chat_message') {
           const message = parsed_data['message'];
-          const senderId = parsed_data['friend_data']['id']; // Ensure this is provided by the server
-
-          // Append received message if it's from the current friend
-          console.warn(senderId, currentFriendId);
-
-
+          const senderId = parsed_data['friend_data']['id'];
 
           if (String(senderId) != String(currentFriendId)) {
-            // console.log('-----if------')
             appendMessage("received", message);
             chatMessages.scrollTop = chatMessages.scrollHeight;
           } else {
-            // console.log('elde------====')
-
-            // Optionally, handle notifications for messages from other friends
-            // appendMessage(currentFriendId, parsed_data['message']);
-
             console.log(`New message from friend ${senderId}`);
           }
 
-          // Store message in chat history
           if (!chatHistories[senderId]) {
             chatHistories[senderId] = [];
           }
-          // chatHistories[senderId].push({ type: 'received', text: message });
-          // console.log("chat his****_---------",chatHistories);
-          
         }
       }
 
@@ -686,5 +731,6 @@
       }
     });
   </script>
+  {% include 'snippets/global_notifications.html' %}
 </body>
 </html>

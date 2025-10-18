@@ -56,7 +56,7 @@
 <body class="bg-light">
 
 <div class="container">
-    <h1 class="text-center mt-4">Video Call Interface</h1>
+    <h1 class="text-center mt-4">Video Call Interface{% if other_user_name %} with {{ other_user_name }}{% endif %}</h1>
 
     <div class="d-flex justify-content-end">
         <!-- Dynamic Dropdown for User List -->
@@ -79,7 +79,7 @@
 
         <!-- Remote Video -->
         <div class="video-box">
-            <h5 class="text-center bg-dark text-light py-2">Remote Video</h5>
+            <h5 class="text-center bg-dark text-light py-2">Remote Video{% if other_user_name %} - {{ other_user_name }}{% endif %}</h5>
             <video id="remoteVideo" autoplay></video>
         </div>
     </div>
@@ -93,12 +93,13 @@
 
 <script>
 
-    const room_name="{{ room_name }}"
+    const room_name = "{{ room_name|escapejs }}";
     console.log(room_name);
-    
 
-    // const roomName = "testRoom";  // Change this to dynamically pass the room name
-    const current_username ="{{curent_user}}"
+    const current_username = "{{ curent_user|escapejs }}";
+    const callId = {% if call_id %}{{ call_id }}{% else %}null{% endif %};
+    const endCallUrl = {% if end_call_url %}'{{ end_call_url|escapejs }}'{% else %}null{% endif %};
+    const otherUserName = {% if other_user_name %}'{{ other_user_name|escapejs }}'{% else %}null{% endif %};
 
 
     // DOM Elements
@@ -107,6 +108,22 @@
     const startCallBtn = document.getElementById('startCallBtn');
     const endCallBtn = document.getElementById('endCallBtn');
     const userListDropdown = document.getElementById('userList');
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
+    }
+
+    let hasNotifiedEnd = false;
+
+    if (!callId) {
+        endCallBtn.disabled = true;
+        console.warn('No active call id found. Use the chat interface to start a call so the server can track it.');
+    }
 
     // WebRTC and WebSocket Variables
     let localStream;
@@ -132,11 +149,17 @@
             handleSignalMessage(data.signal_data, data.username);
         } else if (data.action === 'user_joined') {
             addUserToList(data.username);
-            // Start the video call only if localStream is available
-            if (localStream) {
-                startVideoCall(data.username);  // New user joined, initiate signaling if necessary
-            } else {
-                console.log("Local stream not yet initialized.");
+            if (data.username !== current_username) {
+                const ensureLocalStream = localStream ? Promise.resolve() : initializeLocalStream();
+                ensureLocalStream
+                    .then(() => {
+                        if (localStream) {
+                            startVideoCall(data.username);
+                        }
+                    })
+                    .catch((err) => {
+                        console.error('Unable to initialize local media before starting call.', err);
+                    });
             }
         } else if (data.action === 'user_left') {
             removeUserFromList(data.username);
@@ -317,13 +340,14 @@
                 await initializeLocalStream();
 
             }
-            
+
 
             // If there is an active call, do nothing, otherwise initiate the call
             if (!peerConnection) {
                 await createPeerConnection();
                 // startVideoCall("New User");
             }
+            endCallBtn.disabled = false;
         } catch (error) {
             console.error("Error starting call:", error);
             if (error.name === 'NotAllowedError') {
@@ -341,7 +365,30 @@
     // await initializeLocalStream();
     // };
 
-    endCallBtn.addEventListener("click", () => {
+    async function endActiveCall(options = { viaUnload: false }) {
+        if (!callId || !endCallUrl || hasNotifiedEnd) {
+            return;
+        }
+
+        hasNotifiedEnd = true;
+
+        try {
+            await fetch(endCallUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ call_id: callId }),
+                credentials: 'include',
+                keepalive: options.viaUnload,
+            });
+        } catch (error) {
+            console.error('Failed to update call status.', error);
+        }
+    }
+
+    endCallBtn.addEventListener("click", async () => {
         if (localStream) {
             localStream.getTracks().forEach(track => track.stop());
         }
@@ -350,7 +397,13 @@
         }
         localVideo.srcObject = null;
         remoteVideo.srcObject = null;
+        await endActiveCall();
+        endCallBtn.disabled = true;
         console.log("Call ended");
+    });
+
+    window.addEventListener('beforeunload', () => {
+        endActiveCall({ viaUnload: true });
     });
 
 </script>

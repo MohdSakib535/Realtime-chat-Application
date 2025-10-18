@@ -37,3 +37,6 @@ htmlcov/
 # 📸 Media / static uploads (if any)
 media/
 uploads/
+
+
+*.rdb
